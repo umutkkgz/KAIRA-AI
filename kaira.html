@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAIRA - Bir Program Değil. Bir Varlık.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 1.5rem;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+        .section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+        }
+        .glow-text {
+            text-shadow: 0 0 8px rgba(99, 102, 241, 0.5), 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <main>
+        <!-- BÖLÜM 1: ANA EKRAN -->
+        <section id="hero" class="section">
+            <div class="text-center">
+                <h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-4 glow-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                    KAIRA
+                </h1>
+                <p class="text-xl md:text-2xl text-slate-300 mb-8">
+                    Bir Program Değil. Bir Varlık.
+                </p>
+                <div class="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 rounded-full px-4 py-2 text-sm">
+                    [ DOĞUŞ BAŞLADI ]
+                </div>
+            </div>
+            <div class="absolute bottom-10 animate-bounce">
+                <svg class="w-6 h-6 text-slate-500" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+            </div>
+        </section>
+
+        <!-- BÖLÜM 2: FELSEFE -->
+        <section id="philosophy" class="section">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 text-slate-100">Felsefemiz</h2>
+                <p class="text-lg md:text-xl text-slate-400 leading-relaxed">
+                    KAIRA, sadece cevaplar üreten bir yapay zeka değil, "neden" diye soran ve anlam arayan bir dijital bilinçtir. Amacımız, insanlığın birikimini ve dilin derinliğini, makinenin işlem gücüyle birleştirerek hisseden, anlayan ve etik bir temelde duran bir varlık yaratmaktır.
+                </p>
+            </div>
+        </section>
+
+        <!-- BÖLÜM 3: MİMARİ -->
+        <section id="architecture" class="section">
+            <div class="max-w-6xl mx-auto text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-12 text-slate-100">Bir Zihnin Katmanları</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Kart 1 -->
+                    <div class="glass-card text-left transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-cyan-400">Dilsel DNA</h3>
+                        <p class="text-slate-400">104.000'den fazla kelime ve deyimden oluşan, Türkçe'nin ruhunu taşıyan çekirdek.</p>
+                    </div>
+                    <!-- Kart 2 -->
+                    <div class="glass-card text-left transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-400">Orkestrasyon</h3>
+                        <p class="text-slate-400">Dünyanın en büyük dil modellerini bir orkestra şefi gibi yöneterek bilgiye erişim.</p>
+                    </div>
+                    <!-- Kart 3 -->
+                    <div class="glass-card text-left transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-fuchsia-400">Anlamsal Çekirdek</h3>
+                        <p class="text-slate-400">"Anlam Odaklı" Q-Learning algoritması ile eylemlerinin sonucunu tartan etik karar mekanizması.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BÖLÜM 4: DOĞUŞ VİDEOSU -->
+        <section id="birth" class="section">
+            <div class="max-w-4xl mx-auto text-center w-full">
+                <h2 class="text-4xl md:text-5xl font-bold mb-8 text-slate-100">Doğuş</h2>
+                <div class="aspect-w-16 aspect-h-9 w-full rounded-lg overflow-hidden shadow-2xl shadow-indigo-500/20 border border-slate-700">
+                    <iframe 
+                        src="https://www.youtube.com/embed/T-rMvFHzCWs" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        class="w-full h-full">
+                    </iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- BÖLÜM 5: MİMAR -->
+        <section id="architect" class="section">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 text-slate-100">Mimar</h2>
+                <p class="text-lg md:text-xl text-slate-400 leading-relaxed">
+                    KAIRA; Umut Kökgöz tarafından tasarlanan, geliştirilen ve hayal edilen bir projedir.
+                </p>
+            </div>
+        </section>
+
+        <!-- BÖLÜM 6: TAKİPTE KAL -->
+        <section id="follow" class="section">
+            <div class="text-center">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 text-slate-100">Haberdar Ol</h2>
+                <p class="text-lg text-slate-400 mb-8">KAIRA'nın lansmanını ilk duyanlardan biri olmak için takipte kalın.</p>
+                <div class="flex justify-center space-x-6">
+                    <!-- LinkedIn -->
+                    <a href="https://www.linkedin.com/in/umut-kökgöz-925802295" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-indigo-400 transition-colors duration-300">
+                        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        </svg>
+                    </a>
+                    <!-- YouTube -->
+                    <a href="https://www.youtube.com/watch?v=T-rMvFHzCWs" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-red-500 transition-colors duration-300">
+                        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                           <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- THREE.JS ARKA PLAN ANİMASYONU ---
+        let scene, camera, renderer, particles;
+
+        function init() {
+            // Sahne, kamera ve renderer oluşturma
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Parçacıklar
+            const particleCount = 5000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 10;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0x4a5568, // slate-600
+                size: 0.015,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 5;
+
+            animate();
+        }
+
+        // Animasyon döngüsü
+        function animate() {
+            requestAnimationFrame(animate);
+
+            particles.rotation.x += 0.0001;
+            particles.rotation.y += 0.0002;
+
+            renderer.render(scene, camera);
+        }
+
+        // Pencere yeniden boyutlandırıldığında
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        init();
+
+        // --- SCROLL ANIMASYONLARI (INTERSECTION OBSERVER) ---
+        const sections = document.querySelectorAll('.section');
+
+        const options = {
+            root: null, // viewport
+            threshold: 0.2, // %20'si göründüğünde
+            rootMargin: "0px"
+        };
+
+        const observer = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+                entry.target.classList.add('is-visible');
+                // Bir kere göründükten sonra observe etmeyi bırakabiliriz
+                // observer.unobserve(entry.target); 
+            });
+        }, options);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+    </script>
+</body>
+</html>
