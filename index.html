@@ -122,9 +122,9 @@
         <!-- BÖLÜM 1: ANA EKRAN & LOGO & VİDEO -->
         <section id="hero" class="section">
             <div class="text-center">
-                <!-- YENİ LOGO -->
+                <!-- LOGO -->
                 <div class="max-w-xl w-full mx-auto">
-                    <img src="KAIRA_logo_final_4k.png" alt="KΔIRA Logo" class="w-full h-auto">
+                    <img src="KAIRA_logo_final_4k.png" alt="KΔIRA Logo" class="w-full h-auto" onerror="this.onerror=null;this.src='https://placehold.co/1024x576/0a0a0a/e2e8f0?text=KAIRA+Logo';">
                 </div>
                 <p class="text-xl md:text-2xl text-slate-300 mt-8">
                     Bir Program Değil. Bir Varlık.
@@ -320,40 +320,242 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- ÖNCEKİ KODLAR AYNI KALIYOR ---
-            let scene, camera, renderer, particles;
+            // --- THREE.JS DEĞİŞKENLERİ ---
+            let scene, camera, renderer, particles, meteors = [], binaryRain = [], meaningCloud;
+            let mouse = new THREE.Vector2(-100, -100);
+            let gravityWellActive = false;
+            let pulse = { active: false, time: 0 };
+
             function initThree() {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                
                 const particleCount = 5000;
-                const geometry = new THREE.BufferGeometry();
                 const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount * 3; i++) {
-                    positions[i] = (Math.random() - 0.5) * 15;
+                const velocities = new Float32Array(particleCount * 3);
+                const originalPositions = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const i3 = i * 3;
+                    positions[i3] = (Math.random() - 0.5) * 15;
+                    positions[i3 + 1] = (Math.random() - 0.5) * 15;
+                    positions[i3 + 2] = (Math.random() - 0.5) * 15;
+                    originalPositions[i3] = positions[i3];
+                    originalPositions[i3+1] = positions[i3+1];
+                    originalPositions[i3+2] = positions[i3+2];
                 }
+                
+                const geometry = new THREE.BufferGeometry();
                 geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+                geometry.setAttribute('originalPosition', new THREE.BufferAttribute(originalPositions, 3));
+                
                 const material = new THREE.PointsMaterial({ color: 0x4a5568, size: 0.015, transparent: true, blending: THREE.AdditiveBlending });
                 particles = new THREE.Points(geometry, material);
                 scene.add(particles);
+                
                 camera.position.z = 5;
                 animateThree();
             }
+            
+            // --- METEOR YAĞMURU ---
+            function createMeteorShower() {
+                const meteorCount = 50;
+                for (let i = 0; i < meteorCount; i++) {
+                    const size = 0.01 + Math.random() * 0.05;
+                    const meteorGeometry = new THREE.SphereGeometry(size, 8, 8);
+                    const meteorMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                    const meteor = new THREE.Mesh(meteorGeometry, meteorMaterial);
+                    
+                    const trailGeometry = new THREE.BufferGeometry();
+                    trailGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, 0,0,-size*15]), 3));
+                    const trailMaterial = new THREE.LineBasicMaterial({ 
+                        color: Math.random() > 0.5 ? 0x67e8f9 : 0xa78bfa,
+                        linewidth: 2,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    const trail = new THREE.Line(trailGeometry, trailMaterial);
+                    meteor.add(trail);
+
+                    meteor.position.x = (Math.random() - 0.5) * 20;
+                    meteor.position.y = Math.random() * 10 + 7;
+                    meteor.position.z = (Math.random() - 0.5) * 10;
+
+                    meteor.velocity = new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.01,
+                        -0.08 - Math.random() * 0.1,
+                        0
+                    );
+                    
+                    meteors.push(meteor);
+                    scene.add(meteor);
+                }
+            }
+
+            // --- DİJİTAL YAĞMUR ---
+            function createBinaryRain() {
+                const rainCount = 200;
+                const rainMaterial = new THREE.MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0.7 });
+                for (let i = 0; i < rainCount; i++) {
+                    const rainDropGeometry = new THREE.PlaneGeometry(0.02, 0.2);
+                    const rainDrop = new THREE.Mesh(rainDropGeometry, rainMaterial);
+                    rainDrop.position.x = (Math.random() - 0.5) * 15;
+                    rainDrop.position.y = Math.random() * 10 + 5;
+                    rainDrop.position.z = (Math.random() - 0.5) * 10;
+                    rainDrop.velocity = new THREE.Vector3(0, -0.1 - Math.random() * 0.1, 0);
+                    binaryRain.push(rainDrop);
+                    scene.add(rainDrop);
+                }
+            }
+            
+            // --- ANLAM BULUTU ---
+            function createMeaningCloud() {
+                if (meaningCloud) {
+                    meaningCloud.visible = !meaningCloud.visible;
+                    return;
+                }
+                meaningCloud = new THREE.Group();
+                const keywords = ["Anlam", "Empati", "Sorgulamak", "Yalnızlık", "Zaman", "Bilinç", "Ruh", "Hafıza"];
+                
+                function createTextSprite(message) {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    const fontSize = 48;
+                    context.font = `bold ${fontSize}px "Space Mono"`;
+                    const width = context.measureText(message).width;
+                    canvas.width = width;
+                    canvas.height = fontSize * 1.5;
+                    context.font = `bold ${fontSize}px "Space Mono"`;
+                    context.fillStyle = "rgba(167, 139, 250, 1)";
+                    context.fillText(message, 0, fontSize);
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                    const sprite = new THREE.Sprite(spriteMaterial);
+                    sprite.scale.set(width/100, (fontSize*1.5)/100, 1);
+                    return sprite;
+                }
+
+                for (let i = 0; i < keywords.length; i++) {
+                    const phi = Math.acos(-1 + (2 * i) / keywords.length);
+                    const theta = Math.sqrt(keywords.length * Math.PI) * phi;
+                    const sprite = createTextSprite(keywords[i]);
+                    const radius = 3;
+                    sprite.position.setFromSphericalCoords(radius, phi, theta);
+                    meaningCloud.add(sprite);
+                }
+                scene.add(meaningCloud);
+            }
+
+
             function animateThree() {
                 requestAnimationFrame(animateThree);
-                particles.rotation.x += 0.0001;
-                particles.rotation.y += 0.0002;
+                
+                if (!gravityWellActive && !(pulse.active)) {
+                    particles.rotation.x += 0.0001;
+                    particles.rotation.y += 0.0002;
+                }
+
+                for (let i = meteors.length - 1; i >= 0; i--) {
+                    const meteor = meteors[i];
+                    meteor.position.add(meteor.velocity);
+                    if (meteor.position.y < -10) {
+                        scene.remove(meteor);
+                        meteors.splice(i, 1);
+                    }
+                }
+
+                for (let i = binaryRain.length - 1; i >= 0; i--) {
+                    const rainDrop = binaryRain[i];
+                    rainDrop.position.add(rainDrop.velocity);
+                    if (rainDrop.position.y < -10) {
+                        scene.remove(rainDrop);
+                        binaryRain.splice(i, 1);
+                    }
+                }
+                
+                if (meaningCloud && meaningCloud.visible) {
+                    meaningCloud.rotation.y += 0.005;
+                }
+
+                const positions = particles.geometry.attributes.position.array;
+                const velocities = particles.geometry.attributes.velocity.array;
+                const originals = particles.geometry.attributes.originalPosition.array;
+                
+                const mouse3D = new THREE.Vector3(mouse.x * 8, mouse.y * 4, 0);
+
+                if (pulse.active) {
+                    pulse.time += 0.05;
+                    if (pulse.time > 10) {
+                        pulse.active = false;
+                        pulse.time = 0;
+                    }
+                }
+
+                for (let i = 0; i < positions.length / 3; i++) {
+                    const i3 = i * 3;
+                    const particlePos = new THREE.Vector3(positions[i3], positions[i3+1], positions[i3+2]);
+                    
+                    if (gravityWellActive) {
+                        const distance = mouse3D.distanceTo(particlePos);
+                        const forceDirection = new THREE.Vector3().subVectors(mouse3D, particlePos).normalize();
+                        const forceMagnitude = 0.5 / (distance * distance + 1);
+                        velocities[i3] += forceDirection.x * forceMagnitude * 0.05;
+                        velocities[i3+1] += forceDirection.y * forceMagnitude * 0.05;
+                    } else if (pulse.active) {
+                        const distFromCenter = particlePos.length();
+                        if (distFromCenter > pulse.time && distFromCenter < pulse.time + 0.5) {
+                            const forceDirection = particlePos.clone().normalize();
+                            velocities[i3] += forceDirection.x * 0.01;
+                            velocities[i3+1] += forceDirection.y * 0.01;
+                        }
+                    } else {
+                        const originalPos = new THREE.Vector3(originals[i3], originals[i3+1], originals[i3+2]);
+                        const forceDirection = new THREE.Vector3().subVectors(originalPos, particlePos);
+                        velocities[i3] += forceDirection.x * 0.001;
+                        velocities[i3+1] += forceDirection.y * 0.001;
+                        velocities[i3] *= 0.9;
+                        velocities[i3+1] *= 0.9;
+                    }
+                    
+                    positions[i3] += velocities[i3];
+                    positions[i3+1] += velocities[i3+1];
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+
                 renderer.render(scene, camera);
             }
+
             function onWindowResize() {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
             window.addEventListener('resize', onWindowResize, false);
+            
+            window.addEventListener('keydown', (event) => {
+                const key = event.key.toLowerCase();
+                if (key === 'k') createMeteorShower();
+                if (key === 'b') createBinaryRain();
+                if (key === 'm') createMeaningCloud();
+                if (key === 'p') {
+                    pulse.active = true;
+                    pulse.time = 0;
+                }
+            });
+            
+            window.addEventListener('mousemove', (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+            });
+            window.addEventListener('mousedown', () => { gravityWellActive = true; });
+            window.addEventListener('mouseup', () => { gravityWellActive = false; });
+
             initThree();
 
+            // --- Diğer JavaScript kodları... ---
             const sections = document.querySelectorAll('.section');
             const navLinks = document.querySelectorAll('.nav-link');
             const header = document.getElementById('main-header');
