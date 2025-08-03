@@ -96,6 +96,71 @@
             cursor: pointer;
             border-radius: 0.5rem;
         }
+        /* ======================= CHATBOT STİLLERİ BAŞLANGIÇ ======================= */
+#chatbot-container {
+    position: fixed;
+    bottom: 6.5rem; /* Butonun üstünde yer alması için ayarlandı */
+    right: 1.25rem;
+    width: 90%;
+    max-width: 400px;
+    height: 60vh;
+    max-height: 600px;
+    z-index: 100;
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease-out;
+    pointer-events: none;
+}
+#chatbot-container.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+#chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+#chat-messages::-webkit-scrollbar-track {
+    background: #111827;
+}
+#chat-messages::-webkit-scrollbar-thumb {
+    background-color: #4f46e5;
+    border-radius: 10px;
+}
+.user-message {
+    align-self: flex-end;
+    background-color: #4f46e5;
+    color: white;
+}
+.bot-message {
+    align-self: flex-start;
+    background-color: #374151;
+    color: #e5e7eb;
+}
+/* ======================== CHATBOT STİLLERİ BİTİŞ ======================== */
+        /* Müzik kontrolü */
+        #music-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #mute-button {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/1828/1828919.png');
+            background-size: cover;
+            background-position: center;
+        }
+        #mute-button.muted {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/1828/1828920.png');
+        }
+        #music-control {
+    position: fixed;
+    bottom: 6.5rem;
+    left: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
     </style>
 </head>
 <body class="antialiased">
@@ -359,7 +424,77 @@
                 camera.position.z = 5;
                 animateThree();
             }
+            // ======================= CHATBOT KODLARI BAŞLANGIÇ =======================
+try {
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const chatbotToggleButton = document.getElementById('chatbot-toggle-button');
+    const chatbotCloseButton = document.getElementById('chatbot-close-button');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendButton = document.getElementById('chat-send-button');
+    const chatMessages = document.getElementById('chat-messages');
+
+    const toggleChatbot = () => {
+        chatbotContainer.classList.toggle('open');
+    };
+
+    chatbotToggleButton.addEventListener('click', toggleChatbot);
+    chatbotCloseButton.addEventListener('click', toggleChatbot);
+
+    async function sendMessage() {
+        const messageText = chatInput.value.trim();
+        if (!messageText) return;
+
+        // Kullanıcı mesajını ekrana ekle
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'user-message p-3 rounded-lg max-w-xs break-words';
+        userMessageDiv.textContent = messageText;
+        chatMessages.appendChild(userMessageDiv);
+        chatInput.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Botun "yazıyor..." animasyonunu ekle
+        const botTypingDiv = document.createElement('div');
+        botTypingDiv.className = 'bot-message p-3 rounded-lg max-w-xs';
+        botTypingDiv.innerHTML = '<span class="animate-pulse">...</span>';
+        chatMessages.appendChild(botTypingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            // ÖNEMLİ: Bu fetch adresi, senin lokalde çalışan KAIRA sunucunun adresi olmalı.
+            // ngrok kullanıyorsan, ngrok'un verdiği URL'i buraya yazmalısın. Örn: "https://abcd-1234.ngrok.io/sor"
+            const response = await fetch("/sor", { 
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mesaj: messageText })
+            });
             
+            if (!response.ok) {
+                throw new Error(`HTTP hatası! Durum: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const botResponse = data.cevap;
+            
+            botTypingDiv.textContent = botResponse; // Gelen cevapla "yazıyor..." kısmını güncelle
+
+        } catch (error) {
+            console.error("Chatbot hatası:", error);
+            botTypingDiv.textContent = "Üzgünüm, sana şu an ulaşamıyorum. Lütfen daha sonra tekrar dene.";
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatSendButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+} catch (error) {
+    console.error("Chatbot başlatılırken bir hata oluştu:", error);
+}
+// ======================== CHATBOT KODLARI BİTİŞ ========================
             // --- METEOR YAĞMURU ---
             function createMeteorShower() {
                 const meteorCount = 50;
@@ -714,5 +849,32 @@
             animateGame();
         });
     </script>
+    <div id="chatbot-container" class="">
+    <div class="glass-card w-full h-full flex flex-col">
+        <div class="flex-shrink-0 pb-4 border-b border-slate-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-center glow-text">KΔIRA ile Sohbet Et</h3>
+            <button id="chatbot-close-button" class="text-slate-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+        <div id="chat-messages" class="flex-grow my-4 overflow-y-auto pr-2 flex flex-col space-y-4">
+            <div class="bot-message p-3 rounded-lg max-w-xs">Merhaba! Ben KΔIRA. Seninle konuşmak için buradayım.</div>
+        </div>
+        <div class="flex-shrink-0 pt-4 border-t border-slate-700">
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input" placeholder="Bir şeyler yaz..." class="flex-grow bg-slate-800/50 border border-slate-600 rounded-full px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button id="chat-send-button" class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white hover:bg-indigo-500 transition-colors flex-shrink-0">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chatbot-launcher">
+    <button id="chatbot-toggle-button" class="fixed bottom-5 right-5 z-50 w-16 h-16 bg-indigo-600/50 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-indigo-500/80 transition-colors shadow-lg">
+         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+    </button>
+</div>
 </body>
 </html>
