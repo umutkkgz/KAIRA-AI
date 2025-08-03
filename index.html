@@ -465,7 +465,7 @@ try {
             const response = await fetch("https://dc5de0873bee.ngrok-free.app/sor", { 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mesaj: messageText })
+                body: JSON.stringify({ soru: messageText })
             });
             
             if (!response.ok) {
