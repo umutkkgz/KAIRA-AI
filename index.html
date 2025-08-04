@@ -394,26 +394,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Sayfa açıldığında geçmişi yükle
-window.addEventListener("DOMContentLoaded", () => {
-  const chatMessages = document.getElementById("chat-messages");
-  chatMessages.innerHTML = localStorage.getItem("chat-history") || "";
-});
 
-// Mesaj gönderildiğinde geçmişi güncelle
-function updateChatHistory() {
-  const chatMessages = document.getElementById("chat-messages");
-  localStorage.setItem("chat-history", chatMessages.innerHTML);
-}
-// Yeni mesaj ekleme örneği
-function addBotMessage(msg) {
-  const chatMessages = document.getElementById("chat-messages");
-  const div = document.createElement("div");
-  div.className = "bot-message";
-  div.textContent = msg;
-  chatMessages.appendChild(div);
-  updateChatHistory(); // buraya eklersin
-}
         document.addEventListener('DOMContentLoaded', () => {
             // --- THREE.JS DEĞİŞKENLERİ ---
             let scene, camera, renderer, particles, meteors = [], binaryRain = [], meaningCloud;
