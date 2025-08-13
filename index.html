@@ -429,77 +429,185 @@
                 camera.position.z = 5;
                 animateThree();
             }
-            // ======================= CHATBOT KODLARI BAŞLANGIÇ =======================
+            // ======================= YENİ CHATBOT KODLARI BAŞLANGIÇ =======================
+// Bu blok, eski chatbot kodlarınızın yerine tamamen yapıştırılmalıdır.
+
 try {
+    // --- API ANAHTARLARI ---
+    const API_KEYS = {
+        google: 'AIzaSyDSAs1st3ZCsoxVgfISnLYQJX0uV_5Sgtk',
+        grok: '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',
+        kaira: 'UNUSED_API_KEY'
+    };
+    
+    // --- AYARLAR ---
+    const MEMORY_SIZE = 20; // API'ye gönderilecek maksimum mesaj sayısı (kullanıcı + bot). Token limitini aşmayı engeller.
+
+    // --- HTML ELEMENTLERİ (Sizin HTML'nizdeki ID'lere göre güncellendi) ---
     const chatbotContainer = document.getElementById('chatbot-container');
-    const chatbotToggleButton = document.getElementById('chatbot-toggle-button');
-    const chatbotCloseButton = document.getElementById('chatbot-close-button');
+    const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const chatSendButton = document.getElementById('chat-send-button');
-    const chatMessages = document.getElementById('chat-messages');
+    const modelSelector = document.getElementById('model-selector');
+    const chatbotToggleButton = document.getElementById('chatbot-toggle-button');
+    const chatbotCloseButton = document.getElementById('chatbot-close-button');
 
-    const toggleChatbot = () => {
-        chatbotContainer.classList.toggle('open');
+    // --- SOHBET YÖNETİMİ ---
+    let chatHistories = {
+        google: [],
+        grok: [],
+        kaira: []
+    };
+    let currentModel = 'google'; // Başlangıç modeli
+
+    const loadChatHistory = () => {
+        const savedHistories = localStorage.getItem('kairaMultiModelChat');
+        if (savedHistories) {
+            chatHistories = JSON.parse(savedHistories);
+        }
+        // Başlangıçta seçili olan modelin geçmişini yükle
+        renderHistoryForCurrentModel();
+    };
+    
+    const renderHistoryForCurrentModel = () => {
+        chatMessages.innerHTML = ''; // Önceki sohbeti temizle
+        const currentHistory = chatHistories[currentModel];
+        if (currentHistory && currentHistory.length > 0) {
+            currentHistory.forEach(message => {
+                if (message.role !== 'system') {
+                   appendMessage(message.parts[0].text, message.role, false, true); // noScroll = true
+                }
+            });
+        } else {
+             appendMessage("Merhaba! Ben KΔIRA. Seninle konuşmak için buradayım.", 'model', false, true);
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     };
 
-    chatbotToggleButton.addEventListener('click', toggleChatbot);
-    chatbotCloseButton.addEventListener('click', toggleChatbot);
+    const saveChatHistories = () => {
+        localStorage.setItem('kairaMultiModelChat', JSON.stringify(chatHistories));
+    };
 
-    async function sendMessage() {
-        const messageText = chatInput.value.trim();
-        if (!messageText) return;
+    const appendMessage = (message, sender, isError = false, noScroll = false) => {
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('p-3', 'rounded-lg', 'max-w-xs', 'break-words', 'mb-2');
 
-        // Kullanıcı mesajını ekrana ekle
-        const userMessageDiv = document.createElement('div');
-        userMessageDiv.className = 'user-message p-3 rounded-lg max-w-xs break-words';
-        userMessageDiv.textContent = messageText;
-        chatMessages.appendChild(userMessageDiv);
+        if (sender === 'user') {
+            messageBubble.className += ' user-message';
+        } else {
+            messageBubble.className += ' bot-message';
+            if (isError) {
+                messageBubble.style.backgroundColor = '#ef4444';
+            }
+        }
+        messageBubble.innerText = message;
+        chatMessages.appendChild(messageBubble);
+        if (!noScroll) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    };
+    
+    const sendMessage = async () => {
+        const userMessage = chatInput.value.trim();
+        if (userMessage === '') return;
+
+        appendMessage(userMessage, 'user');
+        chatHistories[currentModel].push({ role: "user", parts: [{ text: userMessage }] });
+        saveChatHistories();
+        
         chatInput.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        // Botun "yazıyor..." animasyonunu ekle
+        
         const botTypingDiv = document.createElement('div');
         botTypingDiv.className = 'bot-message p-3 rounded-lg max-w-xs';
         botTypingDiv.innerHTML = '<span class="animate-pulse">...</span>';
         chatMessages.appendChild(botTypingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        try {
-            // ÖNEMLİ: Bu fetch adresi, senin lokalde çalışan KAIRA sunucunun adresi olmalı.
-            // ngrok kullanıyorsan, ngrok'un verdiği URL'i buraya yazmalısın. Örn: "https://abcd-1234.ngrok.io/sor"
-            const response = await fetch("https://86f5c702c233.ngrok-free.app/sor", { 
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ soru: messageText })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP hatası! Durum: ${response.status}`);
-            }
+        const apiKey = API_KEYS[currentModel];
 
-            const data = await response.json();
-            const botResponse = data.cevap;
+        try {
+            let botMessage = '';
+            const recentHistory = chatHistories[currentModel].slice(-MEMORY_SIZE);
+
+            switch (currentModel) {
+                case 'google':
+                    botMessage = await getGoogleGeminiResponse(apiKey, recentHistory);
+                    break;
+                case 'grok':
+                    botMessage = await getGroqResponse(apiKey, recentHistory);
+                    break;
+                case 'kaira':
+                    botMessage = await getKairaResponse(recentHistory);
+                    break;
+            }
             
-            botTypingDiv.textContent = botResponse; // Gelen cevapla "yazıyor..." kısmını güncelle
+            botTypingDiv.innerText = botMessage;
+            chatHistories[currentModel].push({ role: "model", parts: [{ text: botMessage }] });
+            saveChatHistories();
 
         } catch (error) {
-            console.error("Chatbot hatası:", error);
-            botTypingDiv.textContent = "Üzgünüm, sana şu an ulaşamıyorum. Lütfen daha sonra tekrar dene.";
+            console.error("Hata:", error);
+            botTypingDiv.innerText = `Bir hata oluştu: ${error.message}`;
+            botTypingDiv.style.backgroundColor = '#ef4444';
+        } finally {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    // --- API'YE ÖZEL FONKSİYONLAR ---
+    async function getGoogleGeminiResponse(apiKey, history) {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = { contents: history };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) { const errorData = await response.json(); throw new Error(`Google API Hatası: ${errorData.error.message}`); }
+        const result = await response.json();
+        return result.candidates[0].content.parts[0].text;
     }
 
+    async function getGroqResponse(apiKey, history) {
+        const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        const groqHistory = history.map(msg => ({ role: msg.role === 'model' ? 'assistant' : msg.role, content: msg.parts[0].text }));
+        const payload = { model: "llama3-70b-8192", messages: groqHistory };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) { const errorData = await response.json(); throw new Error(`Groq API Hatası: ${errorData.error.message}`); }
+        const result = await response.json();
+        return result.choices[0].message.content;
+    }
+
+    async function getKairaResponse(history) {
+        const apiUrl = 'https://86f5c702c233.ngrok-free.app/sor';
+        const fullConversation = history.map(msg => { const prefix = msg.role === 'user' ? 'Kullanıcı' : 'Asistan'; return `${prefix}: ${msg.parts[0].text}`; }).join('\n\n');
+        const payload = { soru: fullConversation };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) { const errorText = await response.text(); throw new Error(`Kaira API Hatası: ${response.status} - ${errorText}`); }
+        const result = await response.json();
+        if (!result.cevap) { throw new Error("Kaira API'sinden beklenen 'cevap' formatı alınamadı."); }
+        return result.cevap;
+    }
+
+    // --- OLAY DİNLEYİCİLERİ ---
     chatSendButton.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
+    chatInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') sendMessage(); });
+    
+    modelSelector.addEventListener('change', (event) => {
+        currentModel = event.target.value;
+        renderHistoryForCurrentModel();
     });
+
+    const toggleChatbot = () => chatbotContainer.classList.toggle('open');
+    chatbotToggleButton.addEventListener('click', toggleChatbot);
+    chatbotCloseButton.addEventListener('click', toggleChatbot);
+
+    // --- BAŞLANGIÇ ---
+    loadChatHistory();
+
 } catch (error) {
-    console.error("Chatbot başlatılırken bir hata oluştu:", error);
+    console.error("Gelişmiş chatbot başlatılırken bir hata oluştu:", error);
 }
-// ======================== CHATBOT KODLARI BİTİŞ ========================
+// ======================== YENİ CHATBOT KODLARI BİTİŞ ========================
+
+
+
             // --- METEOR YAĞMURU ---
             function createMeteorShower() {
                 const meteorCount = 50;
@@ -856,12 +964,21 @@ try {
     </script>
     <div id="chatbot-container" class="">
     <div class="glass-card w-full h-full flex flex-col">
-        <div class="flex-shrink-0 pb-4 border-b border-slate-700 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-center glow-text">KΔIRA ile Sohbet Et</h3>
-            <button id="chatbot-close-button" class="text-slate-400 hover:text-white transition-colors">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-            </button>
-        </div>
+       <!-- YENİ KOD (BUNUNLA DEĞİŞTİR) -->
+<div class="flex-shrink-0 pb-4 border-b border-slate-700 flex justify-between items-center">
+    <h3 class="text-xl font-bold glow-text">KΔIRA ile Sohbet Et</h3>
+    <div class="flex items-center space-x-3">
+        <label for="model-selector" class="text-sm">Model:</label>
+        <select id="model-selector" class="bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="google">Google Gemini</option>
+            <option value="grok">Grok (Llama 3)</option>
+            <option value="kaira">Kaira</option>
+        </select>
+    </div>
+    <button id="chatbot-close-button" class="text-slate-400 hover:text-white transition-colors">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+    </button>
+</div>
         <div id="chat-messages" class="flex-grow my-4 overflow-y-auto pr-2 flex flex-col space-y-4">
             <div class="bot-message p-3 rounded-lg max-w-xs">Merhaba! Ben KΔIRA. Seninle konuşmak için buradayım.</div>
         </div>
