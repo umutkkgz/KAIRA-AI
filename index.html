@@ -441,9 +441,10 @@ try {
     };
     
     // --- AYARLAR ---
-    const MEMORY_SIZE = 20; // API'ye gönderilecek maksimum mesaj sayısı (kullanıcı + bot). Token limitini aşmayı engeller.
+    const MEMORY_SIZE = 20; // API'ye gönderilecek maksimum mesaj sayısı (kullanıcı + bot).
+    const LOGGING_ENDPOINT = 'https://86f5c702c233.ngrok-free.app/log'; // Konuşmaları kaydedeceğin sunucu adresi.
 
-    // --- HTML ELEMENTLERİ (Sizin HTML'nizdeki ID'lere göre güncellendi) ---
+    // --- HTML ELEMENTLERİ ---
     const chatbotContainer = document.getElementById('chatbot-container');
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
@@ -458,24 +459,23 @@ try {
         grok: [],
         kaira: []
     };
-    let currentModel = 'google'; // Başlangıç modeli
+    let currentModel = 'google';
 
     const loadChatHistory = () => {
         const savedHistories = localStorage.getItem('kairaMultiModelChat');
         if (savedHistories) {
             chatHistories = JSON.parse(savedHistories);
         }
-        // Başlangıçta seçili olan modelin geçmişini yükle
         renderHistoryForCurrentModel();
     };
     
     const renderHistoryForCurrentModel = () => {
-        chatMessages.innerHTML = ''; // Önceki sohbeti temizle
+        chatMessages.innerHTML = '';
         const currentHistory = chatHistories[currentModel];
         if (currentHistory && currentHistory.length > 0) {
             currentHistory.forEach(message => {
                 if (message.role !== 'system') {
-                   appendMessage(message.parts[0].text, message.role, false, true); // noScroll = true
+                   appendMessage(message.parts[0].text, message.role, false, true);
                 }
             });
         } else {
@@ -491,20 +491,15 @@ try {
     const appendMessage = (message, sender, isError = false, noScroll = false) => {
         const messageBubble = document.createElement('div');
         messageBubble.classList.add('p-3', 'rounded-lg', 'max-w-xs', 'break-words', 'mb-2');
-
         if (sender === 'user') {
             messageBubble.className += ' user-message';
         } else {
             messageBubble.className += ' bot-message';
-            if (isError) {
-                messageBubble.style.backgroundColor = '#ef4444';
-            }
+            if (isError) messageBubble.style.backgroundColor = '#ef4444';
         }
         messageBubble.innerText = message;
         chatMessages.appendChild(messageBubble);
-        if (!noScroll) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        if (!noScroll) chatMessages.scrollTop = chatMessages.scrollHeight;
     };
     
     const sendMessage = async () => {
@@ -544,6 +539,9 @@ try {
             botTypingDiv.innerText = botMessage;
             chatHistories[currentModel].push({ role: "model", parts: [{ text: botMessage }] });
             saveChatHistories();
+
+            // YENİ: Konuşmayı sunucuya kaydet
+            logConversationToServer(userMessage, botMessage, currentModel);
 
         } catch (error) {
             console.error("Hata:", error);
@@ -585,6 +583,24 @@ try {
         return result.cevap;
     }
 
+    // YENİ: Konuşmayı sunucuya loglama fonksiyonu
+    async function logConversationToServer(userMsg, botMsg, modelName) {
+        try {
+            await fetch(LOGGING_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    user: userMsg,
+                    bot: botMsg,
+                    timestamp: new Date().toISOString()
+                })
+            });
+        } catch (error) {
+            console.error("Konuşma kaydı gönderilemedi:", error); // Hata olsa bile chatbot çalışmaya devam eder.
+        }
+    }
+
     // --- OLAY DİNLEYİCİLERİ ---
     chatSendButton.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') sendMessage(); });
@@ -605,6 +621,7 @@ try {
     console.error("Gelişmiş chatbot başlatılırken bir hata oluştu:", error);
 }
 // ======================== YENİ CHATBOT KODLARI BİTİŞ ========================
+
 
 
 
@@ -964,7 +981,7 @@ try {
     </script>
     <div id="chatbot-container" class="">
     <div class="glass-card w-full h-full flex flex-col">
-       <!-- YENİ KOD (BUNUNLA DEĞİŞTİR) -->
+ <!-- YENİ KOD (BUNUNLA DEĞİŞTİR) -->
 <div class="flex-shrink-0 pb-4 border-b border-slate-700 flex justify-between items-center">
     <h3 class="text-xl font-bold glow-text">KΔIRA ile Sohbet Et</h3>
     <div class="flex items-center space-x-3">
@@ -979,6 +996,7 @@ try {
         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
     </button>
 </div>
+
         <div id="chat-messages" class="flex-grow my-4 overflow-y-auto pr-2 flex flex-col space-y-4">
             <div class="bot-message p-3 rounded-lg max-w-xs">Merhaba! Ben KΔIRA. Seninle konuşmak için buradayım.</div>
         </div>
