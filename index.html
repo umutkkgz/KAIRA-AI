@@ -442,7 +442,7 @@ try {
     
     // --- AYARLAR ---
     const MEMORY_SIZE = 10; // API'ye gönderilecek maksimum mesaj sayısı (kullanıcı + bot).
-    const LOGGING_ENDPOINT = 'https://9c7f16ba8648.ngrok-free.app/log'; // Konuşmaları kaydedeceğin sunucu adresi.
+    const LOGGING_ENDPOINT = 'https://d2d35ee85ddd.ngrok-free.app/log'; // Konuşmaları kaydedeceğin sunucu adresi.
 
     // --- HTML ELEMENTLERİ ---
     const chatbotContainer = document.getElementById('chatbot-container');
@@ -573,7 +573,7 @@ try {
     }
 
     async function getKairaResponse(history) {
-        const apiUrl = 'https://9c7f16ba8648.ngrok-free.app/sor';
+        const apiUrl = 'https://d2d35ee85ddd.ngrok-free.app/sor';
         const fullConversation = history.map(msg => { const prefix = msg.role === 'user' ? 'Kullanıcı' : 'Asistan'; return `${prefix}: ${msg.parts[0].text}`; }).join('\n\n');
         const payload = { soru: fullConversation };
         const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
