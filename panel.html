@@ -143,15 +143,6 @@ let soundsReady = false;
 function initGoGame() {
     const container = document.getElementById('canvas-container');
     if (!container) return;
-    
-    const panelContent = container.closest('.glass-card');
-    if (panelContent) {
-        panelContent.style.background = 'transparent';
-        panelContent.style.backdropFilter = 'none';
-        panelContent.style.webkitBackdropFilter = 'none';
-        panelContent.style.border = 'none';
-        panelContent.style.boxShadow = 'none';
-    }
 
     const statusElement = document.getElementById('game-status');
     const restartBtn = document.getElementById('restart-game-btn');
