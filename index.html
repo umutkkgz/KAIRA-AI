@@ -279,9 +279,15 @@
 // Bu blok, eski chatbot kodlarınızın yerine tamamen yapıştırılmalıdır.
 
 try {
+    const API_KEYS = {
+        google: 'AIzaSyDSAs1st3ZCsoxVgfISnLYQJX0uV_5Sgtk',
+        grok: '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',
+        kaira: 'UNUSED_API_KEY'
+    };
+    
     // --- AYARLAR ---
     const MEMORY_SIZE = 20;
-    const LOGGING_ENDPOINT = 'https://0e197039b8a6.ngrok-free.app/log';
+    const LOGGING_ENDPOINT = 'https://b939ebc4c7ba.ngrok-free.app/log';
 
     // --- HTML ELEMENTLERİ ---
     const chatbotContainer = document.getElementById('chatbot-container');
@@ -357,6 +363,8 @@ try {
         chatMessages.appendChild(botTypingDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
+        const apiKey = API_KEYS[currentModel];
+
         try {
             // GLITCH EFEKTİ BAŞLAT
             chatbotContainer.classList.add('glitch');
@@ -367,10 +375,10 @@ try {
 
             switch (currentModel) {
                 case 'google':
-                    botMessage = await getGoogleGeminiResponse(recentHistory);
+                    botMessage = await getGoogleGeminiResponse(apiKey, recentHistory);
                     break;
                 case 'grok':
-                    botMessage = await getGroqResponse(recentHistory);
+                    botMessage = await getGroqResponse(apiKey, recentHistory);
                     break;
                 case 'kaira':
                     botMessage = await getKairaResponse(recentHistory);
@@ -395,36 +403,27 @@ try {
     };
 
     // --- API'YE ÖZEL FONKSİYONLAR ---
-    async function getGoogleGeminiResponse(history) {
-        const response = await fetch('/api/google', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ history })
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Google API Hatası: ${errorData.error}`);
-        }
+    async function getGoogleGeminiResponse(apiKey, history) {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = { contents: history };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) { const errorData = await response.json(); throw new Error(`Google API Hatası: ${errorData.error.message}`); }
         const result = await response.json();
-        return result.text;
+        return result.candidates[0].content.parts[0].text;
     }
 
-    async function getGroqResponse(history) {
-        const response = await fetch('/api/groq', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ history })
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Groq API Hatası: ${errorData.error}`);
-        }
+    async function getGroqResponse(apiKey, history) {
+        const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        const groqHistory = history.map(msg => ({ role: msg.role === 'model' ? 'assistant' : msg.role, content: msg.parts[0].text }));
+        const payload = { model: "llama3-70b-8192", messages: groqHistory };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) { const errorData = await response.json(); throw new Error(`Groq API Hatası: ${errorData.error.message}`); }
         const result = await response.json();
-        return result.text;
+        return result.choices[0].message.content;
     }
 
     async function getKairaResponse(history) {
-        const apiUrl = 'https://0e197039b8a6.ngrok-free.app/sor';
+        const apiUrl = 'https://b939ebc4c7ba.ngrok-free.app/sor';
         const fullConversation = history.map(msg => { const prefix = msg.role === 'user' ? 'Kullanıcı' : 'Asistan'; return `${prefix}: ${msg.parts[0].text}`; }).join('\n\n');
         const payload = { soru: fullConversation };
         const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -477,45 +476,26 @@ try {
     const panelOverlay = document.getElementById('panel-overlay');
     const panelContent = document.getElementById('panel-content');
 
-       const openPanel = async () => {
+    const openPanel = async () => {
         // Panelin içeriğini yükle
         try {
-            // panel.html dosyasını metin olarak çekiyoruz
+            // panel.html dosyasını fetch ile çekiyoruz
             const response = await fetch('panel.html');
             if (!response.ok) throw new Error('Panel dosyası yüklenemedi.');
-            const htmlText = await response.text();
+            const html = await response.text();
             
-            // DÜZELTME: HTML metnini geçici bir alana yükleyerek script'i ayıklıyoruz
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlText;
-
-            // Önce panelin içini temizleyelim
-            panelContent.innerHTML = '';
-
-            // Çektiğimiz HTML'deki tüm elemanları (script hariç) panele ekleyelim
-            Array.from(tempDiv.children).forEach(child => {
-                if (child.tagName.toLowerCase() !== 'script') {
-                    panelContent.appendChild(child.cloneNode(true));
-                }
-            });
-
+            // Çektiğimiz HTML'i panel alanına yerleştiriyoruz
+            panelContent.innerHTML = html;
+            
             // Paneli animasyonla görünür yap
             panelOverlay.classList.remove('opacity-0', 'pointer-events-none');
             panelContent.classList.remove('scale-95');
 
             // Panelin içindeki kapatma butonuna olay dinleyici ekle
+            // Bu buton panel.html'in içinde tanımlı olduğu için burada buluyoruz
             const panelCloseButton = document.getElementById('panel-close-button');
             if(panelCloseButton) {
                 panelCloseButton.addEventListener('click', closePanel);
-            }
-
-            // Ayıkladığımız script'i bulup, yeni bir script etiketi oluşturarak çalıştırıyoruz
-            const scriptTag = tempDiv.querySelector('script');
-            if (scriptTag) {
-                const newScript = document.createElement('script');
-                newScript.textContent = scriptTag.textContent;
-                // Sayfaya eklediğimiz anda script çalışacaktır
-                document.body.appendChild(newScript).remove(); 
             }
 
         } catch (error) {
