@@ -489,63 +489,6 @@
                 camera.position.z = 5;
                 animateThree();
             }
-           // ======================= PANEL KODLARI BAŞLANGIÇ =======================
-try {
-    const openPanelBtn = document.getElementById('open-panel-btn');
-    const panelOverlay = document.getElementById('panel-overlay');
-    const panelContent = document.getElementById('panel-content');
-
-    const openPanel = async () => {
-        // Panelin içeriğini yükle
-        try {
-            // panel.html dosyasını fetch ile çekiyoruz
-            const response = await fetch('panel.html');
-            if (!response.ok) throw new Error('Panel dosyası yüklenemedi.');
-            const html = await response.text();
-            
-            // Çektiğimiz HTML'i panel alanına yerleştiriyoruz
-            panelContent.innerHTML = html;
-            
-            // Paneli animasyonla görünür yap
-            panelOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            panelContent.classList.remove('scale-95');
-
-            // Panelin içindeki kapatma butonuna olay dinleyici ekle
-            // Bu buton panel.html'in içinde tanımlı olduğu için burada buluyoruz
-            const panelCloseButton = document.getElementById('panel-close-button');
-            if(panelCloseButton) {
-                panelCloseButton.addEventListener('click', closePanel);
-            }
-
-        } catch (error) {
-            console.error("Panel yüklenirken hata:", error);
-            panelContent.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
-        }
-    };
-
-    const closePanel = () => {
-        // Paneli animasyonla gizle
-        panelOverlay.classList.add('opacity-0', 'pointer-events-none');
-        panelContent.classList.add('scale-95');
-        // İçeriği temizleyerek bir sonraki açılışa hazırla ve oyun kaynaklarını serbest bırak
-        setTimeout(() => { panelContent.innerHTML = ''; }, 300);
-    };
-
-    // "Evren" butonuna tıklanınca paneli aç
-    openPanelBtn.addEventListener('click', openPanel);
-    
-    // Panelin dışındaki karanlık alana tıklandığında paneli kapat
-    panelOverlay.addEventListener('click', (event) => {
-        if (event.target === panelOverlay) {
-            closePanel();
-        }
-    });
-
-} catch(error) {
-    console.error("Panel sistemi başlatılırken hata:", error);
-}
-// ======================== PANEL KODLARI BİTİŞ ========================
-
             // ======================= YENİ CHATBOT KODLARI BAŞLANGIÇ =======================
 // Bu blok, eski chatbot kodlarınızın yerine tamamen yapıştırılmalıdır.
 
@@ -742,6 +685,62 @@ try {
     console.error("Gelişmiş chatbot başlatılırken bir hata oluştu:", error);
 }
 // ======================== YENİ CHATBOT KODLARI BİTİŞ ========================
+// ======================= PANEL KODLARI BAŞLANGIÇ (EKSİK OLAN KISIM BU) =======================
+try {
+    const openPanelBtn = document.getElementById('open-panel-btn');
+    const panelOverlay = document.getElementById('panel-overlay');
+    const panelContent = document.getElementById('panel-content');
+
+    const openPanel = async () => {
+        // Panelin içeriğini yükle
+        try {
+            // panel.html dosyasını fetch ile çekiyoruz
+            const response = await fetch('panel.html');
+            if (!response.ok) throw new Error('Panel dosyası yüklenemedi.');
+            const html = await response.text();
+            
+            // Çektiğimiz HTML'i panel alanına yerleştiriyoruz
+            panelContent.innerHTML = html;
+            
+            // Paneli animasyonla görünür yap
+            panelOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            panelContent.classList.remove('scale-95');
+
+            // Panelin içindeki kapatma butonuna olay dinleyici ekle
+            // Bu buton panel.html'in içinde tanımlı olduğu için burada buluyoruz
+            const panelCloseButton = document.getElementById('panel-close-button');
+            if(panelCloseButton) {
+                panelCloseButton.addEventListener('click', closePanel);
+            }
+
+        } catch (error) {
+            console.error("Panel yüklenirken hata:", error);
+            panelContent.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
+        }
+    };
+
+    const closePanel = () => {
+        // Paneli animasyonla gizle
+        panelOverlay.classList.add('opacity-0', 'pointer-events-none');
+        panelContent.classList.add('scale-95');
+        // İçeriği temizleyerek bir sonraki açılışa hazırla ve oyun kaynaklarını serbest bırak
+        setTimeout(() => { panelContent.innerHTML = ''; }, 300);
+    };
+
+    // "Evren" butonuna tıklanınca paneli aç
+    openPanelBtn.addEventListener('click', openPanel);
+    
+    // Panelin dışındaki karanlık alana tıklandığında paneli kapat
+    panelOverlay.addEventListener('click', (event) => {
+        if (event.target === panelOverlay) {
+            closePanel();
+        }
+    });
+
+} catch(error) {
+    console.error("Panel sistemi başlatılırken hata:", error);
+}
+// ======================== PANEL KODLARI BİTİŞ ========================
 
             // --- METEOR YAĞMURU ---
             function createMeteorShower() {
