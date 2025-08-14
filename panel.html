@@ -1,5 +1,6 @@
 <!-- Bu dosyanın adı: panel.html -->
 <!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Final Sürümünü içerir. -->
+<meta charset="UTF-8">
 <style>
     /* Oyun Alanı Stilleri */
     #go-game-container {
@@ -136,7 +137,6 @@ function initGoGame() {
     const container = document.getElementById('canvas-container');
     if (!container) return;
     
-    // YENİ: Arka planı şeffaf yapmak için panelin kendisini hedef al
     const panelContent = container.closest('.glass-card');
     if (panelContent) {
         panelContent.style.background = 'transparent';
@@ -180,7 +180,7 @@ function initGoGame() {
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
-        renderer.setClearColor(0x000000, 0); // Şeffaf arka plan
+        renderer.setClearColor(0x000000, 0);
         container.innerHTML = '';
         container.appendChild(renderer.domElement);
 
@@ -211,13 +211,11 @@ function initGoGame() {
 
     function createBoard() {
         const boardGroup = new THREE.Group();
-        const textureLoader = new THREE.TextureLoader();
-        const woodTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/hardwood2_diffuse.jpg', (texture) => {
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(2, 2);
+        const boardMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x1f2937, 
+            roughness: 0.8, 
+            metalness: 0.2 
         });
-        const boardMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, roughness: 0.8, metalness: 0.1 });
         
         const mainBoardGeom = new THREE.BoxGeometry(GRID_UNITS, 0.5, GRID_UNITS);
         boardPlane = new THREE.Mesh(mainBoardGeom, boardMaterial);
@@ -533,4 +531,3 @@ function initGoGame() {
     init();
 }
 </script>
-// Bu script, KAIRA'nın Go oyununu başlatır ve yönetir.
