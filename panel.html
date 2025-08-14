@@ -1,3 +1,14 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KAIRA • Go: Zihin Arenası</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <!-- Bu dosyanın adı: panel.html -->
 <!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Hata Düzeltmeli Final Sürümünü içerir. -->
 <style>
@@ -85,7 +96,25 @@
         border-radius: 8px;
         padding: 0.4rem 0.6rem;
     }
+    /* --- Minimal yardımcı sınıflar (Tailwind bağımsız) --- */
+    html, body { height: 100%; background: radial-gradient(1200px 600px at 50% 0%, rgba(99,102,241,0.15), transparent 60%) #0b1020; margin:0; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .w-full { width: 100%; }
+    .h-full { min-height: 100vh; }
+    .p-4 { padding: 1rem; }
+    .justify-center { justify-content: center; }
+    .space-x-4 { gap: 1rem; }
+    @media (min-width: 768px) { .md\:p-8 { padding: 2rem; } }
+    .text-slate-100 { color: #f1f5f9; }
+    .text-slate-400 { color: #94a3b8; }
+    .glow-text { text-shadow: 0 0 12px rgba(99,102,241,0.55); }
+    .hidden { display: none; }
+    .ai-metrics { margin-top: .5rem; font-size: .9rem; color: #c7d2fe; opacity: .9; text-align: center; }
 </style>
+
+</head>
+<body>
 
 <div class="w-full h-full flex flex-col p-4 md:p-8">
     <div class="w-full flex justify-end mb-4 flex-shrink-0">
@@ -111,11 +140,12 @@
                     </select>
                 </label>
                 <label>Komi:
-                    <input id="komi-input" type="number" step="0.5" value="6.5" />
+                    <input id="komi-input" type="number" step="0.5" value="7.5" />
                 </label>
                 <span id="komi-note" style="font-size:0.9rem;opacity:.8">(Beyaz'a eklenir)</span>
             </div>
             <div id="game-status">Oyun başlıyor...</div>
+            <div id="ai-metrics" class="ai-metrics">ε: 0.20 • Q-durum sayısı: 0 • Skorlama: Çin • Komi: 7.5 • Tahta: 19x19</div>
             <div class="text-center flex space-x-4 justify-center">
                  <button id="pass-btn" class="game-button">Pas Geç</button>
                  <button id="restart-game-btn" class="game-button">Yeni Oyun</button>
@@ -123,6 +153,12 @@
                     <svg id="music-on-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zM11.928 4.072a.5.5 0 00-.578.018L8.99 6.5H7a1 1 0 00-1 1v4a1 1 0 001 1h1.99l2.36 2.41a.5.5 0 00.578.018.5.5 0 00.22-.418V4.5a.5.5 0 00-.22-.428zM14.5 6.5a.5.5 0 01.5.5v5a.5.5 0 01-1 0v-5a.5.5 0 01.5-.5zM17 5.5a.5.5 0 01.5.5v7a.5.5 0 01-1 0v-7a.5.5 0 01.5-.5z"/></svg>
                     <svg id="music-off-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M11.928 4.072a.5.5 0 00-.578.018L8.99 6.5H7a1 1 0 00-1 1v4a1 1 0 001 1h1.99l2.36 2.41a.5.5 0 00.578.018.5.5 0 00.22-.418V4.5a.5.5 0 00-.22-.428zM14.25 7.05a.5.5 0 01.707 0L16.414 8.5l1.457-1.457a.5.5 0 01.707.707L17.121 9.207l1.457 1.457a.5.5 0 01-.707.707L16.414 9.914l-1.457 1.457a.5.5 0 01-.707-.707L15.707 9.207l-1.457-1.457a.5.5 0 010-.707zM7 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1z"/></svg>
                  </button>
+            </div>
+            <div id="qtools" class="text-center flex space-x-4 justify-center" style="margin-top:0.75rem">
+                 <button id="export-q-btn" class="game-button">Q-Tablosunu İndir</button>
+                 <button id="import-q-btn" class="game-button">Q-Tablosu Yükle</button>
+                 <button id="reset-q-btn" class="game-button" style="background-color:rgba(239,68,68,0.3);border-color:#ef4444">Hafızayı Sıfırla</button>
+                 <input id="qfile-input" type="file" accept="application/json" style="display:none">
             </div>
         </div>
     </div>
@@ -186,17 +222,22 @@ function initGoGame() {
     const gameMusic = document.getElementById('game-music');
     const scoringSelect = document.getElementById('scoring-system');
     const komiInput = document.getElementById('komi-input');
+    const exportBtn = document.getElementById('export-q-btn');
+    const importBtn = document.getElementById('import-q-btn');
+    const resetBtn  = document.getElementById('reset-q-btn');
+    const qfileInput = document.getElementById('qfile-input');
+    const metricsEl = document.getElementById('ai-metrics');
 
     // Öğrenme/log ucu (opsiyonel)
     const LEARNING_ENDPOINT = 'https://d2d35ee85ddd.ngrok-free.app/log_go_game';
 
     // --- Kurallar ve Öğrenme Parametreleri
-    const BOARD_SIZE = 9; // 9x9
+    const BOARD_SIZE = 19; // 19x19 (standart tahta)
     const GRID_UNITS = BOARD_SIZE - 1;
     const RULES = {
         scoring: (scoringSelect?.value || 'chinese'), // 'chinese' | 'japanese'
-        komi: parseFloat(komiInput?.value || '6.5'),  // Beyaz'a eklenir
-        superko: true                                  // Görülen aynı konuma dönmeyi yasakla
+        komi: parseFloat(komiInput?.value || '7.5'),  // Beyaz'a eklenir
+        superko: true                                  // Görülen aynı konuma dönmeyi yasakla (Tromp-Taylor/Chinese tarzı)
     };
 
     // Q-öğrenme parametreleri
@@ -256,8 +297,12 @@ function initGoGame() {
         restartBtn.addEventListener('click', startGame);
         passBtn.addEventListener('click', onPassTurn);
         musicToggleBtn.addEventListener('click', toggleMusic);
-        scoringSelect?.addEventListener('change', () => { RULES.scoring = scoringSelect.value; updateStatus(`Skorlama: ${RULES.scoring.toUpperCase()} (komi ${RULES.komi})`); });
-        komiInput?.addEventListener('input', () => { RULES.komi = parseFloat(komiInput.value || '6.5'); updateStatus(`Komi ${RULES.komi} olarak ayarlandı`); });
+        scoringSelect?.addEventListener('change', () => { RULES.scoring = scoringSelect.value; updateStatus(`Skorlama: ${RULES.scoring.toUpperCase()} (komi ${RULES.komi})`); updateMetrics(); });
+        komiInput?.addEventListener('input', () => { RULES.komi = parseFloat(komiInput.value || '7.5'); updateStatus(`Komi ${RULES.komi} olarak ayarlandı`); updateMetrics(); });
+        exportBtn?.addEventListener('click', exportQTable);
+        importBtn?.addEventListener('click', () => qfileInput?.click());
+        qfileInput?.addEventListener('change', importQFile);
+        resetBtn?.addEventListener('click', resetQTable);
     }
 
     function createBoard() {
@@ -312,6 +357,7 @@ function initGoGame() {
         seenPositions.add(serializeBoard(boardState));
         updateStatus("Oyun Başladı. Hamle sırası sende (Siyah). Kurallar: intihar yasak, süperko aktif.");
         updateScores();
+        updateMetrics();
     }
 
     function updateStatus(text) { statusElement.textContent = text; }
@@ -435,6 +481,7 @@ function initGoGame() {
         const capturedCount = sim.captured.length;
         scores[player] += capturedCount; // esir sayısı (Japon sayımında kullanılır)
         updateScores();
+        updateMetrics();
         seenPositions.add(sim.hash);
         lastPass = false;
         gameHistory.push({ player, x, z, captured: capturedCount });
@@ -581,6 +628,7 @@ function initGoGame() {
         // Küçükçe keşif oranını azalt (minimum 0.05)
         epsilon = Math.max(0.05, epsilon * 0.995);
         episode = [];
+        updateMetrics();
     }
 
     async function logGameResult(winner, score) {
@@ -670,6 +718,55 @@ function initGoGame() {
     function loadQTable(){ try { return JSON.parse(localStorage.getItem('kaira_go_q')||'{}'); } catch(e){ return {}; } }
     function saveQTable(table){ try { localStorage.setItem('kaira_go_q', JSON.stringify(table)); } catch(e){} }
 
+    // ---- Q-Tablosu araçları ----
+    function qStateCount(){ try { return Object.keys(qTable||{}).length; } catch(e){ return 0; } }
+
+    function exportQTable(){
+        try {
+            const data = JSON.stringify(qTable || {}, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const ts = new Date().toISOString().replace(/[:.]/g,'-');
+            a.href = url; a.download = `kaira_go_q_${ts}.json`;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+            updateStatus('Q-tablosu indirildi.');
+        } catch (e) { console.error(e); updateStatus('Q-tablosu indirilemedi.'); }
+    }
+
+    function importQFile(ev){
+        const file = ev.target?.files?.[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const obj = JSON.parse(String(reader.result||'{}'));
+                if (obj && typeof obj === 'object') {
+                    qTable = obj; saveQTable(qTable); updateStatus('Q-tablosu yüklendi.'); updateMetrics();
+                } else { updateStatus('Geçersiz Q-tablosu dosyası.'); }
+            } catch (e) { console.error(e); updateStatus('Dosya okunamadı / JSON geçersiz.'); }
+            qfileInput.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    function resetQTable(){
+        try { localStorage.removeItem('kaira_go_q'); } catch(e){}
+        qTable = {}; updateStatus('Hafıza sıfırlandı.'); updateMetrics();
+    }
+
+    function updateMetrics(){
+        if(!metricsEl) return;
+        const eps = (typeof epsilon==='number') ? epsilon.toFixed(2) : '—';
+        const scoreName = (RULES.scoring==='japanese' ? 'Japon' : 'Çin');
+        const komi = (RULES.komi ?? 7.5).toFixed(1);
+        metricsEl.textContent = `ε: ${eps} • Q-durum sayısı: ${qStateCount()} • Skorlama: ${scoreName} • Komi: ${komi} • Tahta: ${BOARD_SIZE}x${BOARD_SIZE}`;
+    }
+
     init();
 }
 </script>
+
+</body>
+</html>
