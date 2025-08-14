@@ -1,5 +1,3 @@
-<!-- Bu dosyanın adı: panel.html -->
-<!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Final Sürümünü içerir. -->
 <style>
     /* Oyun Alanı Stilleri */
     #go-game-container {
@@ -69,26 +67,23 @@
 </style>
 
 <div class="w-full h-full flex flex-col p-4 md:p-8">
-    <!-- Panel Kapatma Butonu -->
     <div class="w-full flex justify-end mb-4 flex-shrink-0">
         <button id="panel-close-button" class="text-slate-400 hover:text-white transition-colors">
             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
     </div>
 
-    <!-- Panel İçeriği - Oyun Alanı -->
     <div class="flex-grow overflow-y-auto text-center flex flex-col">
-        <h2 class="text-3xl md:text-4xl font-bold mb-2 text-slate-100 glow-text">Go: Zihin Arenası</h2>
-        <p class="text-slate-400 mb-6">KΔIRA'ya karşı oyna. Her hamlen, onun hafızasına bir iz bırakır.</p>
+        <h2 class="text-3xl md:text-4xl font-bold mb-2 text-slate-100 glow-text">Go: Zihin Arenas\u0131</h2>
+        <p class="text-slate-400 mb-6">KΔIRA'ya kar\u015f\u0131 oyna. Her hamlen, onun haf\u0131zas\u0131na bir iz b\u0131rak\u0131r.</p>
         
         <div id="go-game-container">
             <div id="canvas-container">
                 <div id="user-score" class="score-display">Esir: 0</div>
                 <div id="kaira-score" class="score-display">Esir: 0</div>
             </div>
-            <div id="game-status">Oyun başlıyor...</div>
             <div class="text-center flex space-x-4 justify-center">
-                 <button id="pass-btn" class="game-button">Pas Geç</button>
+                 <button id="pass-btn" class="game-button">Pas Ge\u00e7</button>
                  <button id="restart-game-btn" class="game-button">Yeni Oyun</button>
                  <button id="music-toggle-btn" class="game-button">
                     <svg id="music-on-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zM11.928 4.072a.5.5 0 00-.578.018L8.99 6.5H7a1 1 0 00-1 1v4a1 1 0 001 1h1.99l2.36 2.41a.5.5 0 00.578.018.5.5 0 00.22-.418V4.5a.5.5 0 00-.22-.428zM14.5 6.5a.5.5 0 01.5.5v5a.5.5 0 01-1 0v-5a.5.5 0 01.5-.5zM17 5.5a.5.5 0 01.5.5v7a.5.5 0 01-1 0v-7a.5.5 0 01.5-.5z"/></svg>
@@ -111,24 +106,31 @@
         const script = document.createElement('script');
         script.src = src;
         script.onload = resolve;
-        script.onerror = reject;
+        script.onerror = () => reject(new Error(`Script load error for ${src}`));
         document.head.appendChild(script);
     });
 
     try {
-        if (typeof THREE === 'undefined') await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js");
-        if (typeof Tone === 'undefined') await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js");
+        await Promise.all([
+            loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"),
+            loadScript("https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js")
+        ]);
         initGoGame();
     } catch (error) {
-        console.error("Kütüphane yüklenirken hata oluştu:", error);
+        console.error("K\u00fct\u00fcphane y\u00fcklenirken hata olu\u015ftu:", error);
+        const statusElement = document.getElementById('game-status');
+        if (statusElement) {
+            statusElement.textContent = "Oyun y\u00fcklenemedi. Gerekli k\u00fct\u00fcphanelere ula\u015f\u0131lam\u0131yor. L\u00fctfen internet ba\u011flant\u0131n\u0131z\u0131 kontrol edin.";
+            statusElement.style.color = '#f87171'; // red-400
+        }
     }
 })();
+
 
 function initGoGame() {
     const container = document.getElementById('canvas-container');
     if (!container) return;
     
-    // YENİ: Arka planı şeffaf yapmak için panelin kendisini hedef al
     const panelContent = container.closest('.glass-card');
     if (panelContent) {
         panelContent.style.background = 'transparent';
@@ -172,7 +174,7 @@ function initGoGame() {
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
-        renderer.setClearColor(0x000000, 0); // Şeffaf arka plan
+        renderer.setClearColor(0x000000, 0);
         container.innerHTML = '';
         container.appendChild(renderer.domElement);
 
@@ -204,7 +206,8 @@ function initGoGame() {
     function createBoard() {
         const boardGroup = new THREE.Group();
         const textureLoader = new THREE.TextureLoader();
-        const woodTexture = textureLoader.load('https://threejs.org/examples/textures/hardwood2_diffuse.jpg', (texture) => {
+        // DÜZELTME: Kırık link yerine çalışan yeni bir link eklendi.
+        const woodTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/hardwood2_diffuse.jpg', (texture) => {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.set(2, 2);
