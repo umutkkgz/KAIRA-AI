@@ -1,6 +1,6 @@
 <!-- Bu dosyanın adı: panel.html -->
-<!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Final Sürümünü içerir. -->
 <meta charset="UTF-8">
+<!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Hata Düzeltmeli Final Sürümünü içerir. -->
 <style>
     /* Oyun Alanı Stilleri */
     #go-game-container {
@@ -98,17 +98,16 @@
             </div>
         </div>
     </div>
-    <audio id="game-music" src="https://www.chosic.com/wp-content/uploads/2022/01/The-Voyage.mp3" loop></audio>
+    <audio id="game-music" src="https://cdn.pixabay.com/audio/2022/11/17/audio_877c64b616.mp3" loop></audio>
 </div>
 
 <script>
 // Bu script sadece bu panel içinde çalışır.
+let soundsReady = false; 
+
 (async () => {
     const loadScript = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-            resolve();
-            return;
-        }
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
         const script = document.createElement('script');
         script.src = src;
         script.onload = resolve;
@@ -117,19 +116,30 @@
     });
 
     try {
-        await Promise.all([
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"),
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js")
-        ]);
-        initGoGame();
+        if (typeof THREE === 'undefined') {
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js");
+        }
     } catch (error) {
-        console.error("Kütüphane yüklenirken hata oluştu:", error);
+        console.error("KRİTİK HATA: Three.js yüklenemedi. Oyun başlatılamıyor.", error);
         const statusElement = document.getElementById('game-status');
         if (statusElement) {
-            statusElement.textContent = "Oyun yüklenemedi. Gerekli kütüphanelere ulaşılamıyor. Lütfen internet bağlantınızı kontrol edin.";
-            statusElement.style.color = '#f87171'; // red-400
+            statusElement.textContent = "Oyunun 3D motoru yüklenemedi. İnternet bağlantınızı kontrol edin.";
+            statusElement.style.color = '#ef4444'; // red-500
         }
+        return;
     }
+
+    try {
+        if (typeof Tone === 'undefined') {
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js");
+        }
+        soundsReady = true;
+    } catch (error) {
+        console.warn("Ses kütüphanesi (Tone.js) yüklenemedi. Oyun sessiz modda başlayacak.", error);
+        soundsReady = false;
+    }
+    
+    initGoGame();
 })();
 
 
@@ -162,9 +172,10 @@ function initGoGame() {
     let scene, camera, renderer, boardPlane, raycaster, mouse, clock;
     let boardState, stones, hoverMarker;
     let currentPlayer, gameOver, gameHistory, scores, lastPass;
-
     let placeSynth, captureSynth;
-    const setupSounds = () => {
+
+    function setupSounds() {
+        if (!soundsReady) return;
         placeSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 } }).toDestination();
         captureSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fmsquare' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination();
     }
@@ -189,8 +200,6 @@ function initGoGame() {
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
         dirLight.position.set(10, 15, 12);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
         scene.add(dirLight);
         
         raycaster = new THREE.Raycaster();
@@ -307,7 +316,7 @@ function initGoGame() {
         stones.push(stone);
         gameHistory.push({ player: currentPlayer, x, z });
         animateScale(stone, 0.1, 1, 300);
-        if(Tone.context.state === 'running') placeSynth.triggerAttackRelease("C4", "8n", Tone.now());
+        if(soundsReady && Tone.context.state === 'running') placeSynth.triggerAttackRelease("C4", "8n", Tone.now());
         capturedStones.forEach(captured => {
             boardState[captured.x][captured.z] = 0;
             const capturedMesh = stones.find(s => s.userData.x === captured.x && s.userData.z === captured.z);
@@ -317,7 +326,7 @@ function initGoGame() {
             }
         });
         if (capturedStones.length > 0) {
-            if(Tone.context.state === 'running') captureSynth.triggerAttackRelease(["C3", "E3", "G3"], "4n", Tone.now());
+            if(soundsReady && Tone.context.state === 'running') captureSynth.triggerAttackRelease(["C3", "E3", "G3"], "4n", Tone.now());
         }
         scores[currentPlayer] += capturedStones.length;
         updateScores();
@@ -487,11 +496,11 @@ function initGoGame() {
     }
 
     function toggleMusic() {
-        if (Tone.context.state !== 'running') {
+        if (soundsReady && Tone.context.state !== 'running') {
             Tone.context.resume();
         }
         if (gameMusic.paused) {
-            gameMusic.play();
+            gameMusic.play().catch(e => console.error("Müzik çalınamadı:", e));
             gameMusic.volume = 0.3;
             musicOnIcon.classList.remove('hidden');
             musicOffIcon.classList.add('hidden');
