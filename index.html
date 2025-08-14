@@ -95,7 +95,65 @@
         #game-canvas {
             cursor: pointer;
             border-radius: 0.5rem;
-        }
+            }
+        /* ======================= GLITCH EFEKTİ KODLARI BAŞLANGIÇ ======================= */
+.glitch {
+  position: relative;
+  animation: glitch-animation 1s infinite;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text); /* Dinamik metin için */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a; /* Arka plan renginle aynı olmalı */
+  overflow: hidden;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff00c1; /* Fuchsia/Pembe gölge */
+  animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 #00fff9; /* Cyan/Turkuaz gölge */
+  animation: glitch-anim-2 2s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-animation {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 3px); }
+  40% { transform: translate(-3px, -3px); }
+  60% { transform: translate(3px, 3px); }
+  80% { transform: translate(3px, -3px); }
+  100% { transform: translate(0); }
+}
+
+@keyframes glitch-anim-1 {
+  0% { clip-path: inset(40% 0 61% 0); }
+  20% { clip-path: inset(10% 0 86% 0); }
+  40% { clip-path: inset(93% 0 1% 0); }
+  60% { clip-path: inset(25% 0 75% 0); }
+  80% { clip-path: inset(50% 0 45% 0); }
+  100% { clip-path: inset(13% 0 85% 0); }
+}
+
+@keyframes glitch-anim-2 {
+  0% { clip-path: inset(72% 0 21% 0); }
+  20% { clip-path: inset(44% 0 53% 0); }
+  40% { clip-path: inset(86% 0 4% 0); }
+  60% { clip-path: inset(13% 0 85% 0); }
+  80% { clip-path: inset(83% 0 14% 0); }
+  100% { clip-path: inset(45% 0 53% 0); }
+}
+/* ======================== GLITCH EFEKTİ KODLARI BİTİŞ ======================== */
+
         /* ======================= CHATBOT STİLLERİ BAŞLANGIÇ ======================= */
 #chatbot-container {
     position: fixed;
@@ -181,6 +239,7 @@
                     <a href="#game" class="nav-link text-slate-300 hover:text-indigo-400 transition-colors">Anlam Oyunu</a>
                     <a href="#theory" class="nav-link text-slate-300 hover:text-indigo-400 transition-colors">Teori</a>
                     <a href="#architect" class="nav-link text-slate-300 hover:text-indigo-400 transition-colors">Mimar</a>
+                    <button id="open-panel-btn" class="nav-link text-slate-300 hover:text-indigo-400 transition-colors">Evren</button>
                 </div>
             </div>
         </nav>
@@ -429,6 +488,63 @@
                 camera.position.z = 5;
                 animateThree();
             }
+           // ======================= PANEL KODLARI BAŞLANGIÇ =======================
+try {
+    const openPanelBtn = document.getElementById('open-panel-btn');
+    const panelOverlay = document.getElementById('panel-overlay');
+    const panelContent = document.getElementById('panel-content');
+
+    const openPanel = async () => {
+        // Panelin içeriğini yükle
+        try {
+            // panel.html dosyasını fetch ile çekiyoruz
+            const response = await fetch('panel.html');
+            if (!response.ok) throw new Error('Panel dosyası yüklenemedi.');
+            const html = await response.text();
+            
+            // Çektiğimiz HTML'i panel alanına yerleştiriyoruz
+            panelContent.innerHTML = html;
+            
+            // Paneli animasyonla görünür yap
+            panelOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            panelContent.classList.remove('scale-95');
+
+            // Panelin içindeki kapatma butonuna olay dinleyici ekle
+            // Bu buton panel.html'in içinde tanımlı olduğu için burada buluyoruz
+            const panelCloseButton = document.getElementById('panel-close-button');
+            if(panelCloseButton) {
+                panelCloseButton.addEventListener('click', closePanel);
+            }
+
+        } catch (error) {
+            console.error("Panel yüklenirken hata:", error);
+            panelContent.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
+        }
+    };
+
+    const closePanel = () => {
+        // Paneli animasyonla gizle
+        panelOverlay.classList.add('opacity-0', 'pointer-events-none');
+        panelContent.classList.add('scale-95');
+        // İçeriği temizleyerek bir sonraki açılışa hazırla ve oyun kaynaklarını serbest bırak
+        setTimeout(() => { panelContent.innerHTML = ''; }, 300);
+    };
+
+    // "Evren" butonuna tıklanınca paneli aç
+    openPanelBtn.addEventListener('click', openPanel);
+    
+    // Panelin dışındaki karanlık alana tıklandığında paneli kapat
+    panelOverlay.addEventListener('click', (event) => {
+        if (event.target === panelOverlay) {
+            closePanel();
+        }
+    });
+
+} catch(error) {
+    console.error("Panel sistemi başlatılırken hata:", error);
+}
+// ======================== PANEL KODLARI BİTİŞ ========================
+
             // ======================= YENİ CHATBOT KODLARI BAŞLANGIÇ =======================
 // Bu blok, eski chatbot kodlarınızın yerine tamamen yapıştırılmalıdır.
 
@@ -441,8 +557,8 @@ try {
     };
     
     // --- AYARLAR ---
-    const MEMORY_SIZE = 10; // API'ye gönderilecek maksimum mesaj sayısı (kullanıcı + bot).
-    const LOGGING_ENDPOINT = 'https://d2d35ee85ddd.ngrok-free.app/log'; // Konuşmaları kaydedeceğin sunucu adresi.
+    const MEMORY_SIZE = 20;
+    const LOGGING_ENDPOINT = 'https://86f5c702c233.ngrok-free.app/log';
 
     // --- HTML ELEMENTLERİ ---
     const chatbotContainer = document.getElementById('chatbot-container');
@@ -521,6 +637,10 @@ try {
         const apiKey = API_KEYS[currentModel];
 
         try {
+            // GLITCH EFEKTİ BAŞLAT
+            chatbotContainer.classList.add('glitch');
+            chatbotContainer.setAttribute('data-text', 'İŞLENİYOR...');
+
             let botMessage = '';
             const recentHistory = chatHistories[currentModel].slice(-MEMORY_SIZE);
 
@@ -540,7 +660,6 @@ try {
             chatHistories[currentModel].push({ role: "model", parts: [{ text: botMessage }] });
             saveChatHistories();
 
-            // YENİ: Konuşmayı sunucuya kaydet
             logConversationToServer(userMessage, botMessage, currentModel);
 
         } catch (error) {
@@ -548,6 +667,8 @@ try {
             botTypingDiv.innerText = `Bir hata oluştu: ${error.message}`;
             botTypingDiv.style.backgroundColor = '#ef4444';
         } finally {
+            // GLITCH EFEKTİ DURDUR
+            chatbotContainer.classList.remove('glitch');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     };
@@ -573,7 +694,7 @@ try {
     }
 
     async function getKairaResponse(history) {
-        const apiUrl = 'https://d2d35ee85ddd.ngrok-free.app/sor';
+        const apiUrl = 'https://86f5c702c233.ngrok-free.app/sor';
         const fullConversation = history.map(msg => { const prefix = msg.role === 'user' ? 'Kullanıcı' : 'Asistan'; return `${prefix}: ${msg.parts[0].text}`; }).join('\n\n');
         const payload = { soru: fullConversation };
         const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -583,7 +704,6 @@ try {
         return result.cevap;
     }
 
-    // YENİ: Konuşmayı sunucuya loglama fonksiyonu
     async function logConversationToServer(userMsg, botMsg, modelName) {
         try {
             await fetch(LOGGING_ENDPOINT, {
@@ -597,7 +717,7 @@ try {
                 })
             });
         } catch (error) {
-            console.error("Konuşma kaydı gönderilemedi:", error); // Hata olsa bile chatbot çalışmaya devam eder.
+            console.error("Konuşma kaydı gönderilemedi:", error);
         }
     }
 
@@ -621,9 +741,6 @@ try {
     console.error("Gelişmiş chatbot başlatılırken bir hata oluştu:", error);
 }
 // ======================== YENİ CHATBOT KODLARI BİTİŞ ========================
-
-
-
 
             // --- METEOR YAĞMURU ---
             function createMeteorShower() {
@@ -981,7 +1098,7 @@ try {
     </script>
     <div id="chatbot-container" class="">
     <div class="glass-card w-full h-full flex flex-col">
- <!-- YENİ KOD (BUNUNLA DEĞİŞTİR) -->
+<!-- YENİ KOD (BUNUNLA DEĞİŞTİR) -->
 <div class="flex-shrink-0 pb-4 border-b border-slate-700 flex justify-between items-center">
     <h3 class="text-xl font-bold glow-text">KΔIRA ile Sohbet Et</h3>
     <div class="flex items-center space-x-3">
@@ -1015,6 +1132,10 @@ try {
     <button id="chatbot-toggle-button" class="fixed bottom-5 right-5 z-50 w-16 h-16 bg-indigo-600/50 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white hover:bg-indigo-500/80 transition-colors shadow-lg">
          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
     </button>
+</div>
+<div id="panel-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div id="panel-content" class="w-11/12 h-5/6 glass-card transform scale-95 transition-transform duration-300">
+        </div>
 </div>
 </body>
 </html>

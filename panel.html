@@ -1,0 +1,527 @@
+<!-- Bu dosyanın adı: panel.html -->
+<!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Final Sürümünü içerir. -->
+<style>
+    /* Oyun Alanı Stilleri */
+    #go-game-container {
+        width: 100%;
+        max-width: 600px; /* Oyun alanının maksimum genişliği */
+        margin: auto;
+        font-family: 'Space Mono', monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #canvas-container {
+        width: 100%;
+        aspect-ratio: 1 / 1; /* Kare olmasını sağlar */
+        cursor: pointer;
+        border-radius: 12px;
+        box-shadow: 0 0 25px rgba(79, 70, 229, 0.3);
+        position: relative; /* Skorları üzerine konumlandırmak için */
+    }
+    #game-status {
+        min-height: 50px;
+        width: 100%;
+        padding: 1rem;
+        background-color: rgba(17, 24, 39, 0.5);
+        border: 1px solid #4f46e5;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+        text-align: center;
+        color: #c7d2fe;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .game-button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        border: 1px solid #4f46e5;
+        background-color: rgba(79, 70, 229, 0.4);
+        color: #e0e7ff;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .game-button:hover {
+        background-color: #4f46e5;
+        transform: scale(1.05);
+    }
+    .score-display {
+        position: absolute;
+        top: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: rgba(10, 10, 10, 0.7);
+        border-radius: 8px;
+        color: white;
+        font-size: 1.2rem;
+        pointer-events: none; /* Tıklamayı engellememesi için */
+    }
+    #user-score {
+        left: 1rem;
+    }
+    #kaira-score {
+        right: 1rem;
+    }
+</style>
+
+<div class="w-full h-full flex flex-col p-4 md:p-8">
+    <!-- Panel Kapatma Butonu -->
+    <div class="w-full flex justify-end mb-4 flex-shrink-0">
+        <button id="panel-close-button" class="text-slate-400 hover:text-white transition-colors">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+    </div>
+
+    <!-- Panel İçeriği - Oyun Alanı -->
+    <div class="flex-grow overflow-y-auto text-center flex flex-col">
+        <h2 class="text-3xl md:text-4xl font-bold mb-2 text-slate-100 glow-text">Go: Zihin Arenası</h2>
+        <p class="text-slate-400 mb-6">KΔIRA'ya karşı oyna. Her hamlen, onun hafızasına bir iz bırakır.</p>
+        
+        <div id="go-game-container">
+            <div id="canvas-container">
+                <div id="user-score" class="score-display">Esir: 0</div>
+                <div id="kaira-score" class="score-display">Esir: 0</div>
+            </div>
+            <div id="game-status">Oyun başlıyor...</div>
+            <div class="text-center flex space-x-4 justify-center">
+                 <button id="pass-btn" class="game-button">Pas Geç</button>
+                 <button id="restart-game-btn" class="game-button">Yeni Oyun</button>
+                 <button id="music-toggle-btn" class="game-button">
+                    <svg id="music-on-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zM11.928 4.072a.5.5 0 00-.578.018L8.99 6.5H7a1 1 0 00-1 1v4a1 1 0 001 1h1.99l2.36 2.41a.5.5 0 00.578.018.5.5 0 00.22-.418V4.5a.5.5 0 00-.22-.428zM14.5 6.5a.5.5 0 01.5.5v5a.5.5 0 01-1 0v-5a.5.5 0 01.5-.5zM17 5.5a.5.5 0 01.5.5v7a.5.5 0 01-1 0v-7a.5.5 0 01.5-.5z"/></svg>
+                    <svg id="music-off-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M11.928 4.072a.5.5 0 00-.578.018L8.99 6.5H7a1 1 0 00-1 1v4a1 1 0 001 1h1.99l2.36 2.41a.5.5 0 00.578.018.5.5 0 00.22-.418V4.5a.5.5 0 00-.22-.428zM14.25 7.05a.5.5 0 01.707 0L16.414 8.5l1.457-1.457a.5.5 0 01.707.707L17.121 9.207l1.457 1.457a.5.5 0 01-.707.707L16.414 9.914l-1.457 1.457a.5.5 0 01-.707-.707L15.707 9.207l-1.457-1.457a.5.5 0 010-.707zM7 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1z"/></svg>
+                 </button>
+            </div>
+        </div>
+    </div>
+    <audio id="game-music" src="https://www.chosic.com/wp-content/uploads/2022/01/The-Voyage.mp3" loop></audio>
+</div>
+
+<script>
+// Bu script sadece bu panel içinde çalışır.
+(async () => {
+    const loadScript = (src) => new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+
+    try {
+        if (typeof THREE === 'undefined') await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js");
+        if (typeof Tone === 'undefined') await loadScript("https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js");
+        initGoGame();
+    } catch (error) {
+        console.error("Kütüphane yüklenirken hata oluştu:", error);
+    }
+})();
+
+function initGoGame() {
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+    
+    // YENİ: Arka planı şeffaf yapmak için panelin kendisini hedef al
+    const panelContent = container.closest('.glass-card');
+    if (panelContent) {
+        panelContent.style.background = 'transparent';
+        panelContent.style.backdropFilter = 'none';
+        panelContent.style.webkitBackdropFilter = 'none';
+        panelContent.style.border = 'none';
+        panelContent.style.boxShadow = 'none';
+    }
+
+    const statusElement = document.getElementById('game-status');
+    const restartBtn = document.getElementById('restart-game-btn');
+    const passBtn = document.getElementById('pass-btn');
+    const userScoreElement = document.getElementById('user-score');
+    const kairaScoreElement = document.getElementById('kaira-score');
+    const musicToggleBtn = document.getElementById('music-toggle-btn');
+    const musicOnIcon = document.getElementById('music-on-icon');
+    const musicOffIcon = document.getElementById('music-off-icon');
+    const gameMusic = document.getElementById('game-music');
+    const LEARNING_ENDPOINT = 'https://d2d35ee85ddd.ngrok-free.app/log_go_game';
+
+    const BOARD_SIZE = 9;
+    const GRID_UNITS = BOARD_SIZE - 1;
+    let scene, camera, renderer, boardPlane, raycaster, mouse, clock;
+    let boardState, stones, hoverMarker;
+    let currentPlayer, gameOver, gameHistory, scores, lastPass;
+
+    let placeSynth, captureSynth;
+    const setupSounds = () => {
+        placeSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 } }).toDestination();
+        captureSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fmsquare' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination();
+    }
+
+    function init() {
+        scene = new THREE.Scene();
+        clock = new THREE.Clock();
+        
+        camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 12, 7);
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.setClearColor(0x000000, 0); // Şeffaf arka plan
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(10, 15, 12);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+        
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+
+        createBoard();
+        setupSounds();
+        startGame();
+        animate();
+
+        container.addEventListener('mousemove', onMouseMove, false);
+        container.addEventListener('mousedown', onMouseDown, false);
+        window.addEventListener('resize', onWindowResize, false);
+        restartBtn.addEventListener('click', startGame);
+        passBtn.addEventListener('click', onPassTurn);
+        musicToggleBtn.addEventListener('click', toggleMusic);
+    }
+
+    function createBoard() {
+        const boardGroup = new THREE.Group();
+        const textureLoader = new THREE.TextureLoader();
+        const woodTexture = textureLoader.load('https://threejs.org/examples/textures/hardwood2_diffuse.jpg', (texture) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+        });
+        const boardMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, roughness: 0.8, metalness: 0.1 });
+        
+        const mainBoardGeom = new THREE.BoxGeometry(GRID_UNITS, 0.5, GRID_UNITS);
+        boardPlane = new THREE.Mesh(mainBoardGeom, boardMaterial);
+        boardPlane.receiveShadow = true;
+        boardGroup.add(boardPlane);
+
+        const edgeHeight = 0.7;
+        const edgeThickness = 0.5;
+        const edgeGeomH = new THREE.BoxGeometry(GRID_UNITS + edgeThickness, edgeHeight, edgeThickness);
+        const edgeGeomV = new THREE.BoxGeometry(edgeThickness, edgeHeight, GRID_UNITS + edgeThickness * 2);
+
+        const edge1 = new THREE.Mesh(edgeGeomH, boardMaterial);
+        edge1.position.z = (GRID_UNITS + edgeThickness) / 2;
+        const edge2 = new THREE.Mesh(edgeGeomH, boardMaterial);
+        edge2.position.z = -(GRID_UNITS + edgeThickness) / 2;
+        const edge3 = new THREE.Mesh(edgeGeomV, boardMaterial);
+        edge3.position.x = (GRID_UNITS + edgeThickness) / 2;
+        const edge4 = new THREE.Mesh(edgeGeomV, boardMaterial);
+        edge4.position.x = -(GRID_UNITS + edgeThickness) / 2;
+        
+        boardGroup.add(edge1, edge2, edge3, edge4);
+        scene.add(boardGroup);
+
+        const grid = new THREE.GridHelper(GRID_UNITS, GRID_UNITS, 0x000000, 0x000000);
+        grid.position.y = 0.251;
+        scene.add(grid);
+        
+        const dotGeometry = new THREE.CylinderGeometry(0.07, 0.07, 0.02, 16);
+        const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                dot.position.set(i - GRID_UNITS / 2, 0.26, j - GRID_UNITS / 2);
+                scene.add(dot);
+            }
+        }
+        
+        const markerGeom = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 32);
+        const markerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 });
+        hoverMarker = new THREE.Mesh(markerGeom, markerMat);
+        hoverMarker.visible = false;
+        scene.add(hoverMarker);
+    }
+
+    function startGame() {
+        gameOver = false;
+        lastPass = false;
+        currentPlayer = 1;
+        boardState = Array(BOARD_SIZE).fill(0).map(() => Array(BOARD_SIZE).fill(0));
+        gameHistory = [];
+        scores = { 1: 0, 2: 0 };
+        if (stones) stones.forEach(stone => scene.remove(stone));
+        stones = [];
+        updateStatus("Oyun Ba\u015flad\u0131. Hamle s\u0131ras\u0131 sende (Siyah).");
+        updateScores();
+    }
+    
+    function updateStatus(text) { statusElement.textContent = text; }
+    function updateScores() {
+        userScoreElement.textContent = `Esir: ${scores[1]}`;
+        kairaScoreElement.textContent = `Esir: ${scores[2]}`;
+    }
+
+    function placeStone(x, z, isRealMove = true) {
+        if (boardState[x][z] !== 0) return false;
+        const tempBoard = boardState.map(row => row.slice());
+        tempBoard[x][z] = currentPlayer;
+        const capturedStones = getCapturedStones(x, z, currentPlayer, tempBoard);
+        const group = findGroup(x, z, currentPlayer, tempBoard);
+        if (capturedStones.length === 0 && group.liberties === 0) {
+            if (isRealMove) updateStatus("\u0130ntihar hamlesi! Ge\u00e7ersiz.");
+            return false;
+        }
+        if (!isRealMove) return true;
+        boardState[x][z] = currentPlayer;
+        const stoneGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.15, 32);
+        const stoneMaterial = new THREE.MeshStandardMaterial({
+            color: (currentPlayer === 1) ? 0x1a1a1a : 0xf0f0f0,
+            roughness: (currentPlayer === 1) ? 0.4 : 0.2,
+            metalness: (currentPlayer === 1) ? 0.3 : 0.0
+        });
+        const stone = new THREE.Mesh(stoneGeometry, stoneMaterial);
+        stone.castShadow = true;
+        stone.userData = { x, z };
+        const boardX = x - GRID_UNITS / 2;
+        const boardZ = z - GRID_UNITS / 2;
+        stone.position.set(boardX, 0.325, boardZ);
+        scene.add(stone);
+        stones.push(stone);
+        gameHistory.push({ player: currentPlayer, x, z });
+        animateScale(stone, 0.1, 1, 300);
+        if(Tone.context.state === 'running') placeSynth.triggerAttackRelease("C4", "8n", Tone.now());
+        capturedStones.forEach(captured => {
+            boardState[captured.x][captured.z] = 0;
+            const capturedMesh = stones.find(s => s.userData.x === captured.x && s.userData.z === captured.z);
+            if (capturedMesh) {
+                animateScale(capturedMesh, 1, 0.1, 300, () => scene.remove(capturedMesh));
+                stones = stones.filter(s => s !== capturedMesh);
+            }
+        });
+        if (capturedStones.length > 0) {
+            if(Tone.context.state === 'running') captureSynth.triggerAttackRelease(["C3", "E3", "G3"], "4n", Tone.now());
+        }
+        scores[currentPlayer] += capturedStones.length;
+        updateScores();
+        lastPass = false;
+        endTurn();
+        return true;
+    }
+    
+    function getCapturedStones(x, z, player, currentBoard) {
+        const opponent = player === 1 ? 2 : 1;
+        let allCaptured = [];
+        const neighbors = [{dx:0, dy:1}, {dx:0, dy:-1}, {dx:1, dy:0}, {dx:-1, dy:0}];
+        neighbors.forEach(n => {
+            const nx = x + n.dx;
+            const nz = z + n.dy;
+            if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE && currentBoard[nx][nz] === opponent) {
+                const group = findGroup(nx, nz, opponent, currentBoard);
+                if (group.liberties === 0) {
+                    allCaptured = allCaptured.concat(group.stones);
+                }
+            }
+        });
+        return allCaptured;
+    }
+
+    function findGroup(startX, startZ, player, currentBoard) {
+        const q = [{x: startX, z: startZ}];
+        const visited = new Set([`${startX},${startZ}`]);
+        const groupStones = [];
+        let liberties = 0;
+        const libertyCoords = new Set();
+        while (q.length > 0) {
+            const {x, z} = q.shift();
+            groupStones.push({x, z});
+            const neighbors = [{dx:0, dy:1}, {dx:0, dy:-1}, {dx:1, dy:0}, {dx:-1, dy:0}];
+            neighbors.forEach(n => {
+                const nx = x + n.dx;
+                const nz = z + n.dy;
+                const key = `${nx},${nz}`;
+                if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE && !visited.has(key)) {
+                    if (currentBoard[nx][nz] === 0) {
+                        if (!libertyCoords.has(key)) {
+                            liberties++;
+                            libertyCoords.add(key);
+                        }
+                    } else if (currentBoard[nx][nz] === player) {
+                        visited.add(key);
+                        q.push({x: nx, z: nz});
+                    }
+                }
+            });
+        }
+        return { stones: groupStones, liberties: liberties };
+    }
+    
+    function onPassTurn() {
+        if (gameOver || currentPlayer !== 1) return;
+        if (lastPass) { endGame(); } 
+        else {
+            lastPass = true;
+            gameHistory.push({ player: currentPlayer, action: 'pass' });
+            endTurn();
+        }
+    }
+
+    function endTurn() {
+        if (gameOver) return;
+        currentPlayer = (currentPlayer === 1) ? 2 : 1;
+        if (currentPlayer === 1) {
+            updateStatus("Hamle s\u0131ras\u0131 sende (Siyah).");
+        } else {
+            const thinkingTexts = ["Hamleni analiz ediyorum...", "Stratejini hesapl\u0131yorum...", "Bir sonraki ad\u0131m\u0131 d\u00fc\u015f\u00fcn\u00fcyorum..."];
+            updateStatus(`KΔIRA d\u00fc\u015f\u00fcn\u00fcyor: ${thinkingTexts[Math.floor(Math.random() * thinkingTexts.length)]}`);
+            setTimeout(kairaTurn, 1200);
+        }
+    }
+
+    function kairaTurn() {
+        if (gameOver) return;
+        const validMoves = [];
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (placeStone(i, j, false)) { validMoves.push({ x: i, z: j }); }
+            }
+        }
+        if (validMoves.length === 0) { 
+            gameHistory.push({ player: currentPlayer, action: 'pass' });
+            if (lastPass) { endGame(); } else { lastPass = true; endTurn(); }
+            return;
+        }
+        const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+        placeStone(move.x, move.z);
+    }
+    
+    function endGame() {
+        if (gameOver) return;
+        gameOver = true;
+        let userFinalScore = scores[1];
+        let kairaFinalScore = scores[2];
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if(boardState[i][j] === 1) userFinalScore++;
+                if(boardState[i][j] === 2) kairaFinalScore++;
+            }
+        }
+        let winner;
+        if (userFinalScore > kairaFinalScore) {
+            winner = 'Sen (Siyah)';
+            updateStatus(`Harika! Kazand\u0131n! Skor: Sen ${userFinalScore} - KΔIRA ${kairaFinalScore}`);
+        } else if (kairaFinalScore > userFinalScore) {
+            winner = 'KΔIRA (Beyaz)';
+            updateStatus(`Oyun Bitti! KΔIRA kazand\u0131. Skor: KΔIRA ${kairaFinalScore} - Sen ${userFinalScore}`);
+        } else {
+            winner = 'Berabere';
+            updateStatus(`Oyun Bitti! Skorlar e\u015fit: ${userFinalScore}-${kairaFinalScore}`);
+        }
+        logGameResult(winner);
+    }
+
+    async function logGameResult(winner) {
+        try {
+            await fetch(LEARNING_ENDPOINT, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ winner, history: gameHistory, boardSize: BOARD_SIZE, timestamp: new Date().toISOString() })
+            });
+        } catch (error) { console.error("Oyun sonucu gönderilemedi:", error); }
+    }
+
+    function onMouseMove(event) {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+    }
+
+    function onMouseDown(event) {
+        if (currentPlayer !== 1 || gameOver) return;
+        if (hoverMarker.visible) {
+            const x = Math.round(hoverMarker.position.x + GRID_UNITS / 2);
+            const z = Math.round(hoverMarker.position.z + GRID_UNITS / 2);
+            placeStone(x, z);
+        }
+    }
+    
+    function onWindowResize() {
+        if (!container.clientWidth || !container.clientHeight) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animateScale(object, from, to, duration, onComplete) {
+        const start = Date.now();
+        object.scale.set(from, from, from);
+        const update = () => {
+            const elapsed = Date.now() - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const scale = from + (to - from) * progress;
+            object.scale.set(scale, scale, scale);
+            if (progress < 1) { requestAnimationFrame(update); } 
+            else if (onComplete) { onComplete(); }
+        };
+        update();
+    }
+
+    function toggleMusic() {
+        if (Tone.context.state !== 'running') {
+            Tone.context.resume();
+        }
+        if (gameMusic.paused) {
+            gameMusic.play();
+            gameMusic.volume = 0.3;
+            musicOnIcon.classList.remove('hidden');
+            musicOffIcon.classList.add('hidden');
+        } else {
+            gameMusic.pause();
+            musicOnIcon.classList.add('hidden');
+            musicOffIcon.classList.remove('hidden');
+        }
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+        
+        // 1 tam tur 600 saniye (10 dakika) sürer.
+        camera.position.x = Math.sin(elapsedTime * (Math.PI * 2 / 600)) * 10;
+        camera.position.z = Math.cos(elapsedTime * (Math.PI * 2 / 600)) * 10;
+        camera.lookAt(0, 0, 0);
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(boardPlane);
+        if (intersects.length > 0 && !gameOver && currentPlayer === 1) {
+            const intersectPoint = intersects[0].point;
+            const x = Math.round(intersectPoint.x);
+            const z = Math.round(intersectPoint.z);
+            const arrayX = x + GRID_UNITS / 2;
+            const arrayZ = z + GRID_UNITS / 2;
+            if (arrayX >= 0 && arrayX < BOARD_SIZE && arrayZ >= 0 && arrayZ < BOARD_SIZE && boardState[arrayX][arrayZ] === 0) {
+                hoverMarker.position.set(x, 0.325, z);
+                hoverMarker.visible = true;
+            } else { hoverMarker.visible = false; }
+        } else { hoverMarker.visible = false; }
+
+        renderer.render(scene, camera);
+    }
+
+    init();
+}
+</script>
