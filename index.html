@@ -691,26 +691,45 @@ try {
     const panelOverlay = document.getElementById('panel-overlay');
     const panelContent = document.getElementById('panel-content');
 
-    const openPanel = async () => {
+       const openPanel = async () => {
         // Panelin içeriğini yükle
         try {
-            // panel.html dosyasını fetch ile çekiyoruz
+            // panel.html dosyasını metin olarak çekiyoruz
             const response = await fetch('panel.html');
             if (!response.ok) throw new Error('Panel dosyası yüklenemedi.');
-            const html = await response.text();
+            const htmlText = await response.text();
             
-            // Çektiğimiz HTML'i panel alanına yerleştiriyoruz
-            panelContent.innerHTML = html;
-            
+            // DÜZELTME: HTML metnini geçici bir alana yükleyerek script'i ayıklıyoruz
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlText;
+
+            // Önce panelin içini temizleyelim
+            panelContent.innerHTML = '';
+
+            // Çektiğimiz HTML'deki tüm elemanları (script hariç) panele ekleyelim
+            Array.from(tempDiv.children).forEach(child => {
+                if (child.tagName.toLowerCase() !== 'script') {
+                    panelContent.appendChild(child.cloneNode(true));
+                }
+            });
+
             // Paneli animasyonla görünür yap
             panelOverlay.classList.remove('opacity-0', 'pointer-events-none');
             panelContent.classList.remove('scale-95');
 
             // Panelin içindeki kapatma butonuna olay dinleyici ekle
-            // Bu buton panel.html'in içinde tanımlı olduğu için burada buluyoruz
             const panelCloseButton = document.getElementById('panel-close-button');
             if(panelCloseButton) {
                 panelCloseButton.addEventListener('click', closePanel);
+            }
+
+            // Ayıkladığımız script'i bulup, yeni bir script etiketi oluşturarak çalıştırıyoruz
+            const scriptTag = tempDiv.querySelector('script');
+            if (scriptTag) {
+                const newScript = document.createElement('script');
+                newScript.textContent = scriptTag.textContent;
+                // Sayfaya eklediğimiz anda script çalışacaktır
+                document.body.appendChild(newScript).remove(); 
             }
 
         } catch (error) {
