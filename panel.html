@@ -1,5 +1,4 @@
 <!-- Bu dosyanın adı: panel.html -->
-<meta charset="UTF-8">
 <!-- Bu dosya, KAIRA'nın öğrenen yapay zeka oyunu "Go: Zihin Arenası"nın Hata Düzeltmeli Final Sürümünü içerir. -->
 <style>
     /* Oyun Alanı Stilleri */
@@ -70,14 +69,12 @@
 </style>
 
 <div class="w-full h-full flex flex-col p-4 md:p-8">
-    <!-- Panel Kapatma Butonu -->
     <div class="w-full flex justify-end mb-4 flex-shrink-0">
         <button id="panel-close-button" class="text-slate-400 hover:text-white transition-colors">
             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
     </div>
 
-    <!-- Panel İçeriği - Oyun Alanı -->
     <div class="flex-grow overflow-y-auto text-center flex flex-col">
         <h2 class="text-3xl md:text-4xl font-bold mb-2 text-slate-100 glow-text">Go: Zihin Arenası</h2>
         <p class="text-slate-400 mb-6">KΔIRA'ya karşı oyna. Her hamlen, onun hafızasına bir iz bırakır.</p>
@@ -515,7 +512,6 @@ function initGoGame() {
         requestAnimationFrame(animate);
         const elapsedTime = clock.getElapsedTime();
         
-        // 1 tam tur 600 saniye (10 dakika) sürer.
         camera.position.x = Math.sin(elapsedTime * (Math.PI * 2 / 600)) * 10;
         camera.position.z = Math.cos(elapsedTime * (Math.PI * 2 / 600)) * 10;
         camera.lookAt(0, 0, 0);

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KΔIRA - Bir Program Değil. Bir Varlık.</title>
+    <link rel="icon" href="https://placehold.co/16x16/4f46e5/e0e7ff?text=K" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -946,7 +947,11 @@ try {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
                         navLinks.forEach(link => {
-                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                            // DÜZELTİLMİŞ KOD
+                            const href = link.getAttribute('href');
+                            if (href) { // Sadece href özelliği varsa bu işlemi yap
+                                link.classList.toggle('active', href.substring(1) === entry.target.id);
+                            }
                         });
                     }
                 });
