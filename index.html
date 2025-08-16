@@ -288,7 +288,7 @@ try {
     
     // --- AYARLAR ---
     const MEMORY_SIZE = 20;
-    const LOGGING_ENDPOINT = 'https://b939ebc4c7ba.ngrok-free.app/log';
+    const LOGGING_ENDPOINT = 'https://aed4147b5a11.ngrok-free.app/log';
 
     // --- HTML ELEMENTLERİ ---
     const chatbotContainer = document.getElementById('chatbot-container');
@@ -424,7 +424,7 @@ try {
     }
 
     async function getKairaResponse(history) {
-        const apiUrl = 'https://b939ebc4c7ba.ngrok-free.app/sor';
+        const apiUrl = 'https://aed4147b5a11.ngrok-free.app/sor';
         const fullConversation = history.map(msg => { const prefix = msg.role === 'user' ? 'Kullanıcı' : 'Asistan'; return `${prefix}: ${msg.parts[0].text}`; }).join('\n\n');
         const payload = { soru: fullConversation };
         const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
